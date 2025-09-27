@@ -1,43 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FretFlow</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDI Guitar Visualizer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: #222;
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr; /* Left: info, Center: fretboard, Right: controls */
+      gap: 1rem;
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    .panel {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    #fretboard {
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    /* Start screen overlay */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      z-index: 10;
+    }
+
+    #start-screen button {
+      margin: 1rem;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+    }
+
+    #start-screen button:hover {
+      background: #45a049;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        grid-template-columns: 1fr; /* Stack vertically on phones */
+        grid-template-rows: auto auto auto;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>FretFlow</h1>
-    </header>
 
-    <!-- Start Screen -->
-    <div id="start-screen" class="screen">
-        <button id="load-btn">Load MIDI</button>
-        <button id="old-btn">Old Files</button>
+  <header>
+    🎸 MIDI Guitar Visualizer
+  </header>
+
+  <main>
+    <div id="midi-info" class="panel">
+      <h2>MIDI Info</h2>
+      <p>Auto-scrolling events will appear here...</p>
     </div>
-
-    <!-- Main App (hidden initially) -->
-    <div id="main-app" class="screen hidden">
-        <div class="columns">
-            <div class="column left">
-                <div id="midi-info" class="scroller"></div>
-            </div>
-            <div class="column center">
-                <svg id="fretboard" width="600" height="200" viewBox="0 0 600 200"></svg>
-            </div>
-            <div class="column right">
-                <div id="controls">
-                    <button id="play-btn">Play</button>
-                    <button id="pause-btn">Pause</button>
-                    <button id="stop-btn">Stop</button>
-                    <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
-                </div>
-            </div>
-        </div>
+    <div id="fretboard" class="panel">
+      <p>[Guitar Fretboard Placeholder]</p>
     </div>
+    <div id="controls" class="panel">
+      <h2>Controls</h2>
+      <button>▶ Play</button>
+      <button>⏸ Pause</button>
+      <button>⏹ Stop</button>
+    </div>
+  </main>
 
-    <script src="script.js"></script>
+  <!-- Start screen -->
+  <div id="start-screen">
+    <h1>Welcome</h1>
+    <button id="load-btn">Load</button>
+    <button id="old-btn">Old</button>
+  </div>
+
+  <script>
+    // Start screen dismissal logic
+    document.getElementById('load-btn').onclick = () => {
+      document.getElementById('start-screen').style.display = 'none';
+      // TODO: add file loading logic
+    };
+
+    document.getElementById('old-btn').onclick = () => {
+      document.getElementById('start-screen').style.display = 'none';
+      // TODO: fetch cached MIDI files
+    };
+  </script>
 </body>
 </html>
