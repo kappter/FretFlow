@@ -3,7 +3,7 @@ const tuning = [40, 45, 50, 55, 59, 64]; // MIDI note numbers
 const numFrets = 12;
 const strings = 6;
 let player = null;
-let midiNotes = []; // To store parsed MIDI events
+let midiNotes = [];
 
 // Draw vertical fretboard
 function drawFretboard() {
@@ -70,30 +70,34 @@ document.getElementById('upload-btn').addEventListener('click', () => {
     document.getElementById('load-btn').click();
 });
 
-// Load sample MIDI (placeholders—replace with real URLs or base64)
-document.getElementById('sample-select').addEventListener('change', e => {
-    const url = e.target.value;
-    if (url) {
-        // Placeholder: Fetch or load sample MIDI
-        // For now, simulate with a dummy MIDI
+// Load sample MIDI (placeholders)
+document.getElementById('sample-select').addEventListener('change', async e => {
+    if (e.target.value) {
+        await Tone.start(); // Start AudioContext on user interaction
+        // Simulate MIDI data (replace with real MIDI URLs or parsing)
+        midiNotes = [
+            { name: 'C4', number: 60, time: 0 },
+            { name: 'E4', number: 64, time: 1 },
+            { name: 'G4', number: 67, time: 2 }
+        ];
         player = new Tone.Player({
             url: 'https://tonejs.github.io/audio/berklee/guitar_nylon22.mp3', // Placeholder
             loop: false
         }).toDestination();
-        midiNotes = [{ name: 'C4', number: 60, time: 0 }, { name: 'E4', number: 64, time: 1 }]; // Dummy data
         showMainApp();
     }
 });
 
 // Parse and load MIDI
-function loadMidiFile(file) {
+async function loadMidiFile(file) {
+    await Tone.start(); // Start AudioContext on user interaction
     const reader = new FileReader();
-    reader.onload = async e => {
+    reader.onload = e => {
         player = new Tone.Player({
             url: e.target.result,
             loop: false
         }).toDestination();
-        // Simulate MIDI parsing (replace with actual MIDI parsing library like midi-parser-js)
+        // Simulate MIDI parsing
         midiNotes = [
             { name: 'C4', number: 60, time: 0 },
             { name: 'E4', number: 64, time: 1 },
@@ -110,16 +114,19 @@ function showMainApp() {
 }
 
 // Playback controls
-document.getElementById('play-btn').addEventListener('click', () => {
+document.getElementById('play-btn').addEventListener('click', async () => {
     if (player) {
-        Tone.start();
+        await Tone.start(); // Ensure AudioContext is running
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
         player.start();
-        // Schedule note highlights and info
         midiNotes.forEach(note => {
-            Tone.Transport.scheduleOnce(() => {
-                highlightNote(note.number);
-                updateMidiInfo(note, Tone.Transport.seconds);
-            }, note.time);
+            if (isFinite(note.time)) { // Validate time
+                Tone.Transport.scheduleOnce(() => {
+                    highlightNote(note.number);
+                    updateMidiInfo(note, Tone.Transport.seconds);
+                }, note.time);
+            }
         });
         Tone.Transport.start();
     }
@@ -141,8 +148,9 @@ document.getElementById('stop-btn').addEventListener('click', () => {
 });
 
 document.getElementById('speed').addEventListener('input', e => {
-    if (player) {
-        Tone.Transport.bpm.value = 120 * e.target.value;
+    const speed = parseFloat(e.target.value);
+    if (player && isFinite(speed)) {
+        Tone.Transport.bpm.value = 120 * speed;
     }
 });
 
