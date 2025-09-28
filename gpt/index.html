@@ -1,1 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDI Guitar Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    🎸 MIDI Guitar Visualizer
+  </header>
+
+  <main>
+    <!-- Left column: MIDI event log -->
+    <div id="midi-info" class="panel">
+      <h2>MIDI Output</h2>
+      <div id="log">Events will scroll here...</div>
+    </div>
+
+    <!-- Center column: Vertical fretboard -->
+    <div id="fretboard" class="panel">
+      <svg id="guitar-neck" viewBox="0 0 200 600" preserveAspectRatio="xMidYMid meet">
+        <!-- 6 Strings -->
+        <line x1="20" y1="0" x2="20" y2="600" stroke="black" stroke-width="2"/>
+        <line x1="50" y1="0" x2="50" y2="600" stroke="black" stroke-width="2"/>
+        <line x1="80" y1="0" x2="80" y2="600" stroke="black" stroke-width="2"/>
+        <line x1="110" y1="0" x2="110" y2="600" stroke="black" stroke-width="2"/>
+        <line x1="140" y1="0" x2="140" y2="600" stroke="black" stroke-width="2"/>
+        <line x1="170" y1="0" x2="170" y2="600" stroke="black" stroke-width="2"/>
+
+        <!-- 12 Frets -->
+        <g id="frets">
+          <!-- JS will generate circles for notes later -->
+          <line x1="0" y1="50" x2="200" y2="50" stroke="gray"/>
+          <line x1="0" y1="100" x2="200" y2="100" stroke="gray"/>
+          <line x1="0" y1="150" x2="200" y2="150" stroke="gray"/>
+          <line x1="0" y1="200" x2="200" y2="200" stroke="gray"/>
+          <line x1="0" y1="250" x2="200" y2="250" stroke="gray"/>
+          <line x1="0" y1="300" x2="200" y2="300" stroke="gray"/>
+          <line x1="0" y1="350" x2="200" y2="350" stroke="gray"/>
+          <line x1="0" y1="400" x2="200" y2="400" stroke="gray"/>
+          <line x1="0" y1="450" x2="200" y2="450" stroke="gray"/>
+          <line x1="0" y1="500" x2="200" y2="500" stroke="gray"/>
+          <line x1="0" y1="550" x2="200" y2="550" stroke="gray"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Right column: Controls -->
+    <div id="controls" class="panel">
+      <h2>Controls</h2>
+      <div class="player-buttons">
+        <button id="play">▶ Play</button>
+        <button id="pause">⏸ Pause</button>
+        <button id="stop">⏹ Stop</button>
+      </div>
+      <hr />
+      <label for="file-upload">Upload MIDI:</label>
+      <input type="file" id="file-upload" accept=".mid,.midi" />
+      <hr />
+      <label for="sample-select">Samples:</label>
+      <select id="sample-select">
+        <option value="">-- Select Sample --</option>
+        <option value="sample1.mid">Sample 1</option>
+        <option value="sample2.mid">Sample 2</option>
+        <option value="sample3.mid">Sample 3</option>
+        <option value="sample4.mid">Sample 4</option>
+        <option value="sample5.mid">Sample 5</option>
+        <option value="sample6.mid">Sample 6</option>
+      </select>
+    </div>
+  </main>
+
+  <footer>
+    © 2025 MIDI Guitar Visualizer
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
 
