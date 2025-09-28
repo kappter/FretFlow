@@ -1,0 +1,58 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header, footer {
+  background: #222;
+  color: #fff;
+  padding: 0.8rem;
+  text-align: center;
+}
+
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.panel {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.8rem;
+  overflow-y: auto;
+}
+
+#fretboard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#guitar-neck {
+  width: 100%;
+  height: auto;
+}
+
+#log {
+  font-family: monospace;
+  font-size: 0.9rem;
+  white-space: pre-line;
+}
+
+.player-buttons button {
+  margin: 0.2rem;
+}
+
+@media (max-width: 768px) {
+  main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+}
