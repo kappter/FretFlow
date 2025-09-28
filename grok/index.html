@@ -1,1 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FretFlow</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+    <header>
+        <h1>FretFlow</h1>
+    </header>
 
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <button id="load-btn">Load MIDI</button>
+        <select id="sample-select">
+            <option value="">Select Sample MIDI</option>
+            <option value="sample1.mid">Sample: C Major Scale</option>
+            <option value="sample2.mid">Sample: Blues Riff</option>
+            <option value="sample3.mid">Sample: Twinkle Twinkle</option>
+            <option value="sample4.mid">Sample: Chord Progression</option>
+            <option value="sample5.mid">Sample: Arpeggio Study</option>
+            <option value="sample6.mid">Sample: Simple Melody</option>
+        </select>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="screen hidden">
+        <div class="columns">
+            <div class="column left">
+                <div id="midi-info" class="scroller"></div>
+            </div>
+            <div class="column center">
+                <svg id="fretboard" width="600" height="400" viewBox="0 0 600 400"></svg>
+            </div>
+            <div class="column right">
+                <div id="controls">
+                    <button id="play-btn">Play</button>
+                    <button id="pause-btn">Pause</button>
+                    <button id="stop-btn">Stop</button>
+                    <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1" title="Playback Speed">
+                    <button id="upload-btn">Upload MIDI</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 FretFlow</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
