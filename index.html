@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Theory Modes</title>
     <style>
+        :root {
+            --theme-color: #00ffcc;
+        }
         body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
@@ -21,7 +24,7 @@
             background: #2a2a2a;
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(var(--theme-color-rgb, 0, 255, 204), 0.2);
             transition: transform 0.3s ease;
         }
         .container:hover {
@@ -29,8 +32,8 @@
         }
         h1 {
             text-align: center;
-            color: #00ffcc;
-            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+            color: var(--theme-color);
+            text-shadow: 0 0 10px rgba(var(--theme-color-rgb, 0, 255, 204), 0.5);
             margin-bottom: 20px;
         }
         .relative-modes {
@@ -41,10 +44,10 @@
             background: #333;
             padding: 10px;
             border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 10px rgba(var(--theme-color-rgb, 0, 255, 204), 0.1);
         }
         .relative-modes span {
-            color: #00ffcc;
+            color: var(--theme-color);
             font-weight: bold;
         }
         .controls {
@@ -54,7 +57,7 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-        select {
+        select, input[type="color"] {
             padding: 10px;
             font-size: 16px;
             border: none;
@@ -64,8 +67,13 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
-        select:hover {
+        select:hover, input[type="color"]:hover {
             background: #4a4a4a;
+        }
+        input[type="color"] {
+            width: 50px;
+            height: 40px;
+            padding: 5px;
         }
         table {
             width: 100%;
@@ -78,7 +86,7 @@
             border-bottom: 1px solid #444;
         }
         th {
-            background: #00ffcc;
+            background: var(--theme-color);
             color: #1a1a1a;
             text-transform: uppercase;
             font-weight: bold;
@@ -99,12 +107,15 @@
         canvas {
             background: #333;
             border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 10px rgba(var(--theme-color-rgb, 0, 255, 204), 0.1);
         }
         .canvas-label {
             font-size: 16px;
-            color: #00ffcc;
+            color: var(--theme-color);
             margin-bottom: 10px;
+        }
+        #fretboardCanvas {
+            margin-bottom: 20px; /* Space for fret numbers */
         }
         @media (max-width: 600px) {
             .container {
@@ -114,7 +125,7 @@
                 flex-direction: column;
                 align-items: center;
             }
-            select {
+            select, input[type="color"] {
                 width: 100%;
             }
             th, td {
@@ -146,6 +157,7 @@
                 <option value="highBottom">High String Bottom</option>
                 <option value="lowBottom">Low String Bottom</option>
             </select>
+            <input type="color" id="themeColor" value="#00ffcc" title="Select Theme Color">
             <select id="keySelect">
                 <option value="C">C</option>
                 <option value="C#">C#</option>
@@ -191,6 +203,7 @@
         let currentNotation = 'sharp';
         let currentTuning = 'standard';
         let currentStringOrder = 'highBottom';
+        let themeColor = '#00ffcc';
         let modesData = {};
         const modes = ["Ionian", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Aeolian", "Locrian"];
         const sharpNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -239,6 +252,15 @@
             Mixolydian: ["7", "min7", "min7b5", "maj7", "min7", "min7", "maj7"],
             Aeolian: ["min7", "min7b5", "maj7", "min7", "min7", "maj7", "7"],
             Locrian: ["min7b5", "maj7", "min7", "min7", "maj7", "7", "min7"]
+        };
+        const modeEmotions = {
+            Ionian: "Bright, happy, triumphant",
+            Dorian: "Soulful, introspective, jazzy",
+            Phrygian: "Exotic, tense, mysterious",
+            Lydian: "Dreamy, ethereal, floating",
+            Mixolydian: "Upbeat, bluesy, rock-oriented",
+            Aeolian: "Sad, melancholic, somber",
+            Locrian: "Dark, unstable, dissonant"
         };
 
         function getSemitone(note, notation) {
@@ -329,6 +351,13 @@
             return relatives;
         }
 
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `${r}, ${g}, ${b}`;
+        }
+
         function drawFretboard(notes) {
             const canvas = document.getElementById('fretboardCanvas');
             const ctx = canvas.getContext('2d');
@@ -337,6 +366,7 @@
             const stringSpacing = canvas.height / 6;
             const fretSpacing = canvas.width / 13;
             const noteRadius = 15;
+
             const stringOrder = currentStringOrder === 'lowBottom' ? guitarStrings.slice().reverse() : guitarStrings;
 
             // Draw strings
@@ -375,8 +405,17 @@
                 }
             });
 
+            // Draw fret numbers
+            ctx.fillStyle = themeColor;
+            ctx.font = '10px Roboto';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            for (let i = 0; i <= 12; i++) {
+                ctx.fillText(i, i * fretSpacing + fretSpacing / 2, canvas.height + 5);
+            }
+
             // Draw mode notes
-            ctx.fillStyle = '#00ffcc';
+            ctx.fillStyle = themeColor;
             ctx.font = '12px Roboto';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -393,7 +432,7 @@
                         ctx.fill();
                         ctx.fillStyle = '#1a1a1a';
                         ctx.fillText(note, x, y);
-                        ctx.fillStyle = '#00ffcc';
+                        ctx.fillStyle = themeColor;
                     }
                 }
             });
@@ -430,7 +469,7 @@
             });
 
             // Highlight mode notes
-            ctx.fillStyle = '#00ffcc';
+            ctx.fillStyle = themeColor;
             ctx.font = '12px Roboto';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -442,7 +481,7 @@
                         ctx.fillRect(x, 0, keyWidth, canvas.height);
                         ctx.fillStyle = '#1a1a1a';
                         ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 5);
-                        ctx.fillStyle = '#00ffcc';
+                        ctx.fillStyle = themeColor;
                     }
                     x += keyWidth;
                 });
@@ -453,7 +492,7 @@
                         ctx.fillRect(x - keyWidth / 2 + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
                         ctx.fillStyle = '#1a1a1a';
                         ctx.fillText(noteName, x - keyWidth / 2 + offset * keyWidth + keyWidth / 4, blackKeyHeight - 5);
-                        ctx.fillStyle = '#00ffcc';
+                        ctx.fillStyle = themeColor;
                     }
                 });
                 x += 7 * keyWidth;
@@ -470,6 +509,7 @@
             document.getElementById('tableBody').innerHTML = `
                 <tr><td>Notes</td><td>${data.notes.join(", ")}</td></tr>
                 <tr><td>Intervals</td><td>${data.intervals.join(", ")}</td></tr>
+                <tr><td>Emotion/Feeling</td><td>${modeEmotions[mode]}</td></tr>
                 <tr><td>Triads</td><td>${data.triads.join(", ")}</td></tr>
                 <tr><td>Four-Note Chords</td><td>${data.fourNote.join(", ")}</td></tr>
                 <tr><td>Five-Note Chords</td><td>${data.fiveNote.join(", ")}</td></tr>
@@ -483,6 +523,9 @@
             currentNotation = 'sharp';
             currentTuning = 'standard';
             currentStringOrder = 'highBottom';
+            themeColor = '#00ffcc';
+            document.documentElement.style.setProperty('--theme-color', themeColor);
+            document.documentElement.style.setProperty('--theme-color-rgb', hexToRgb(themeColor));
             modesData = generateData(currentNotation);
             updateKeySelect();
             document.getElementById('notationSelect').addEventListener('change', (e) => {
@@ -497,6 +540,12 @@
             });
             document.getElementById('stringOrderSelect').addEventListener('change', (e) => {
                 currentStringOrder = e.target.value;
+                updateTable();
+            });
+            document.getElementById('themeColor').addEventListener('input', (e) => {
+                themeColor = e.target.value;
+                document.documentElement.style.setProperty('--theme-color', themeColor);
+                document.documentElement.style.setProperty('--theme-color-rgb', hexToRgb(themeColor));
                 updateTable();
             });
             document.getElementById('keySelect').addEventListener('change', updateTable);
