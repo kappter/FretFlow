@@ -113,6 +113,10 @@
             font-size: 16px;
             color: var(--theme-color);
             margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
         #fretboardCanvas {
             margin-bottom: 20px;
@@ -137,6 +141,10 @@
             }
             canvas {
                 width: 100%;
+            }
+            .canvas-label {
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
@@ -193,9 +201,9 @@
             <tbody id="tableBody"></tbody>
         </table>
         <div class="canvas-container">
-            <div class="canvas-label">Guitar Fretboard</div>
+            <div class="canvas-label">Guitar Fretboard <span id="fretboardKeyMode"></span></div>
             <canvas id="fretboardCanvas" width="840" height="150"></canvas>
-            <div class="canvas-label">Piano Roll</div>
+            <div class="canvas-label">Piano Roll <span id="pianoKeyMode"></span></div>
             <canvas id="pianoCanvas" width="840" height="100"></canvas>
         </div>
     </div>
@@ -507,20 +515,34 @@
                 x += 7 * keyWidth;
             });
 
+            // Draw label backgrounds for white keys
+            x = 0;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            octaves.forEach(octave => {
+                whiteKeys.forEach(note => {
+                    const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
+                    if (notes.includes(noteName)) {
+                        ctx.fillRect(x, canvas.height - 20, keyWidth, 16);
+                    }
+                    x += keyWidth;
+                });
+                x += 7 * keyWidth;
+            });
+
             // Draw labels for active notes
             ctx.font = 'bold 12px Roboto';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
+            ctx.textBaseline = 'middle';
             x = 0;
             octaves.forEach(octave => {
                 whiteKeys.forEach(note => {
                     const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
                     if (notes.includes(noteName)) {
-                        ctx.fillStyle = '#1a1a1a'; // Dark text for white keys
-                        ctx.strokeStyle = '#000';
-                        ctx.lineWidth = 0.5;
-                        ctx.strokeText(noteName, x + keyWidth / 2, canvas.height - 8);
-                        ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 8);
+                        ctx.fillStyle = '#000';
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 1;
+                        ctx.strokeText(noteName, x + keyWidth / 2, canvas.height - 12);
+                        ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 12);
                     }
                     x += keyWidth;
                 });
@@ -546,6 +568,8 @@
             const data = modesData[key][mode];
             const relativeModes = getRelativeModes(key, mode);
             document.getElementById('relativeModes').innerHTML = `You have selected <span>${key} ${mode}</span>, which is also the same note structure as: ${relativeModes.join(", ")}`;
+            document.getElementById('fretboardKeyMode').innerHTML = `(${key} ${mode})`;
+            document.getElementById('pianoKeyMode').innerHTML = `(${key} ${mode})`;
             document.getElementById('tableBody').innerHTML = `
                 <tr><td>Notes</td><td>${data.notes.join(", ")}</td></tr>
                 <tr><td>Intervals</td><td>${data.intervals.join(", ")}</td></tr>
