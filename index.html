@@ -366,7 +366,6 @@
             const stringSpacing = canvas.height / 6;
             const fretSpacing = canvas.width / 13;
             const noteRadius = 15;
-
             const stringOrder = currentStringOrder === 'lowBottom' ? guitarStrings.slice().reverse() : guitarStrings;
 
             // Draw strings
@@ -479,10 +478,13 @@
                     const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
                     if (notes.includes(noteName)) {
                         ctx.fillRect(x, 0, keyWidth, canvas.height);
-                        ctx.fillStyle = '#1a1a1a';
-                        ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 5);
-                        ctx.fillStyle = themeColor;
                     }
+                    ctx.fillStyle = '#fff'; // White text for all white keys
+                    ctx.strokeStyle = '#000'; // Black stroke for white key text
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeText(noteName, x + keyWidth / 2, canvas.height - 8);
+                    ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 8);
+                    ctx.fillStyle = themeColor;
                     x += keyWidth;
                 });
                 blackKeyOffsets.forEach(offset => {
@@ -491,7 +493,7 @@
                     if (notes.includes(noteName)) {
                         ctx.fillRect(x - keyWidth / 2 + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
                         ctx.fillStyle = '#1a1a1a';
-                        ctx.fillText(noteName, x - keyWidth / 2 + offset * keyWidth + keyWidth / 4, blackKeyHeight - 5);
+                        ctx.fillText(noteName, x - keyWidth / 2 + offset * keyWidth + keyWidth / 4, blackKeyHeight - 8);
                         ctx.fillStyle = themeColor;
                     }
                 });
