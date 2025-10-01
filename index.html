@@ -98,10 +98,10 @@
             background: #444;
         }
         .canvas-container {
-            margin-top: 20px;
+            margin-top: 30px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px;
             align-items: center;
         }
         canvas {
@@ -109,14 +109,15 @@
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(var(--theme-color-rgb, 0, 255, 204), 0.1);
         }
+        #pianoCanvas {
+            width: 100%;
+            max-width: 800px;
+            height: 120px;
+        }
         .canvas-label {
             font-size: 16px;
             color: var(--theme-color);
             margin-bottom: 10px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
         }
         #fretboardCanvas {
             margin-bottom: 20px;
@@ -142,9 +143,11 @@
             canvas {
                 width: 100%;
             }
+            #pianoCanvas {
+                height: 100px;
+            }
             .canvas-label {
-                flex-direction: column;
-                align-items: center;
+                font-size: 14px;
             }
         }
     </style>
@@ -201,10 +204,10 @@
             <tbody id="tableBody"></tbody>
         </table>
         <div class="canvas-container">
-            <div class="canvas-label">Guitar Fretboard <span id="fretboardKeyMode"></span></div>
-            <canvas id="fretboardCanvas" width="840" height="150"></canvas>
-            <div class="canvas-label">Piano Roll <span id="pianoKeyMode"></span></div>
-            <canvas id="pianoCanvas" width="840" height="120"></canvas>
+            <div class="canvas-label">Guitar Fretboard</div>
+            <canvas id="fretboardCanvas" width="800" height="150"></canvas>
+            <div class="canvas-label">Piano Roll</div>
+            <canvas id="pianoCanvas" width="800" height="120"></canvas>
         </div>
     </div>
     <script>
@@ -372,7 +375,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const guitarStrings = getGuitarStrings(currentTuning);
             const stringSpacing = canvas.height / 6;
-            const fretSpacing = canvas.width / 14; // 13 frets + nut
+            const fretSpacing = canvas.width / 13;
             const noteRadius = 15;
             const stringOrder = currentStringOrder === 'lowBottom' ? guitarStrings.slice().reverse() : guitarStrings;
 
@@ -386,36 +389,28 @@
                 ctx.stroke();
             }
 
-            // Draw frets (nut at x=0, fret 1 at x=fretSpacing, etc.)
-            for (let i = 0; i <= 13; i++) {
-                ctx.lineWidth = (i === 1) ? 4 : 2; // Thicker line for fret 1
+            // Draw frets
+            for (let i = 0; i <= 12; i++) {
                 ctx.beginPath();
                 ctx.moveTo(i * fretSpacing, 0);
                 ctx.lineTo(i * fretSpacing, canvas.height);
                 ctx.stroke();
             }
 
-            // Draw fret 1 label
-            ctx.fillStyle = themeColor;
-            ctx.font = '10px Roboto';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText('Fret 1', fretSpacing, -10);
-
-            // Draw fret markers at frets 3, 5, 7, 9, 12
+            // Draw fret markers
             const markers = [3, 5, 7, 9, 12];
-            ctx.fillStyle = '#888';
+            ctx.fillStyle = '#666';
             markers.forEach(fret => {
                 if (fret === 12) {
                     ctx.beginPath();
-                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 1.5, 10, 0, Math.PI * 2);
+                    ctx.arc(fret * fretSpacing - fretSpacing / 2, stringSpacing * 1.5, 5, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 4.5, 10, 0, Math.PI * 2);
+                    ctx.arc(fret * fretSpacing - fretSpacing / 2, stringSpacing * 4.5, 5, 0, Math.PI * 2);
                     ctx.fill();
                 } else {
                     ctx.beginPath();
-                    ctx.arc(fret * fretSpacing + fretSpacing / 2, canvas.height / 2, 10, 0, Math.PI * 2);
+                    ctx.arc(fret * fretSpacing - fretSpacing / 2, canvas.height / 2, 5, 0, Math.PI * 2);
                     ctx.fill();
                 }
             });
@@ -429,17 +424,7 @@
                 ctx.fillText(i, i * fretSpacing + fretSpacing / 2, canvas.height + 5);
             }
 
-            // Draw open string labels
-            ctx.fillStyle = themeColor;
-            ctx.font = 'bold 12px Roboto';
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-            stringOrder.forEach((string, stringIndex) => {
-                const label = `${string.note}${string.octave}`;
-                ctx.fillText(label, -40, stringIndex * stringSpacing + stringSpacing / 2);
-            });
-
-            // Draw mode notes (including open strings and fret 1)
+            // Draw mode notes
             ctx.fillStyle = themeColor;
             ctx.font = '12px Roboto';
             ctx.textAlign = 'center';
@@ -467,92 +452,72 @@
             const canvas = document.getElementById('pianoCanvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const keyWidth = canvas.width / 24;
-            const blackKeyHeight = canvas.height * 0.6; // 72px with 120px height
+
+            const totalKeys = 24; // 2 octaves (12 keys per octave)
+            const keyWidth = canvas.width / (7 * 2); // Width per white key (7 white keys per octave)
+            const blackKeyWidth = keyWidth * 0.6; // Black keys are narrower
+            const blackKeyHeight = canvas.height * 0.65; // Black keys cover ~65% of height
             const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-            const blackKeyOffsets = [0, 1, 3, 4, 5]; // C#, D#, F#, G#, A#
+            const blackKeyOffsets = [0.75, 2.75, 4.75, 6.75, 8.75]; // Relative positions for C#, D#, F#, G#, A#
             const octaves = [3, 4];
-            const themeColorRgb = hexToRgb(themeColor);
 
-            // Save context to preserve state
-            ctx.save();
-
-            // Draw white keys and highlights
-            let x = 0;
+            // Draw white keys
             ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            let x = 0;
             octaves.forEach(octave => {
                 whiteKeys.forEach(note => {
-                    const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
                     ctx.fillRect(x, 0, keyWidth, canvas.height);
-                    if (notes.includes(noteName)) {
-                        ctx.fillStyle = `rgba(${themeColorRgb}, 0.5)`;
-                        ctx.fillRect(x, 0, keyWidth, canvas.height);
-                    }
+                    ctx.strokeRect(x, 0, keyWidth, canvas.height); // Add borders for clarity
                     x += keyWidth;
                 });
-                x += 7 * keyWidth;
             });
 
-            // Draw black keys and highlights
-            x = keyWidth / 2;
+            // Draw black keys
+            x = 0;
             octaves.forEach(octave => {
                 blackKeyOffsets.forEach(offset => {
                     ctx.fillStyle = '#000';
-                    ctx.fillRect(x + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
-                    const semitone = (getSemitone(whiteKeys[offset % 7], currentNotation) + 1) % 12;
-                    const noteName = getNoteFromSemitone(semitone, currentNotation);
-                    if (notes.includes(noteName)) {
-                        ctx.fillStyle = `rgba(${themeColorRgb}, 0.5)`;
-                        ctx.fillRect(x + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
-                    }
+                    ctx.fillRect(x + offset * keyWidth - blackKeyWidth / 2, 0, blackKeyWidth, blackKeyHeight);
+                    ctx.strokeRect(x + offset * keyWidth - blackKeyWidth / 2, 0, blackKeyWidth, blackKeyHeight);
                 });
-                x += 7 * keyWidth;
+                x += 7 * keyWidth; // Move to next octave
             });
 
-            // Draw label backgrounds and labels for white keys
+            // Highlight mode notes
+            ctx.font = '12px Roboto';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
             x = 0;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Darker background for contrast
             octaves.forEach(octave => {
                 whiteKeys.forEach(note => {
                     const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
                     if (notes.includes(noteName)) {
-                        ctx.fillRect(x, 80, keyWidth, 20); // 20px high background
-                        ctx.strokeStyle = '#ff0000'; // Red outline for debug
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(x, 80, keyWidth, 20);
-                        ctx.fillStyle = themeColor;
-                        ctx.strokeStyle = '#000';
-                        ctx.lineWidth = 2;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.strokeText(noteName, x + keyWidth / 2, 90); // y = 90px, center of 80-100px
-                        ctx.fillText(noteName, x + keyWidth / 2, 90);
-                        console.log(`White key label: ${noteName} at x=${x + keyWidth / 2}, y=90`); // Debug log
+                        // Semi-transparent highlight for white keys
+                        ctx.fillStyle = themeColor + '80'; // Add 80% opacity
+                        ctx.fillRect(x, 0, keyWidth, canvas.height);
+                        ctx.strokeRect(x, 0, keyWidth, canvas.height); // Redraw border
                     }
+                    // White key text
+                    ctx.fillStyle = '#000';
+                    ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 5);
                     x += keyWidth;
                 });
-                x += 7 * keyWidth;
-            });
-
-            // Draw labels for black keys (simplified)
-            x = keyWidth / 2;
-            octaves.forEach(octave => {
+                // Black key highlights and text
                 blackKeyOffsets.forEach(offset => {
-                    const semitone = (getSemitone(whiteKeys[offset % 7], currentNotation) + 1) % 12;
+                    const semitone = (getSemitone(whiteKeys[Math.floor(offset / 2)], currentNotation) + 1) % 12;
                     const noteName = getNoteFromSemitone(semitone, currentNotation);
                     if (notes.includes(noteName)) {
-                        ctx.fillStyle = '#1a1a1a';
-                        ctx.strokeStyle = '#000';
-                        ctx.lineWidth = 0.5;
-                        ctx.strokeText(noteName, x + offset * keyWidth + keyWidth / 4, blackKeyHeight - 8);
-                        ctx.fillText(noteName, x + offset * keyWidth + keyWidth / 4, blackKeyHeight - 8);
+                        ctx.fillStyle = themeColor + '80'; // Semi-transparent highlight
+                        ctx.fillRect(x + offset * keyWidth - blackKeyWidth / 2, 0, blackKeyWidth, blackKeyHeight);
+                        ctx.strokeRect(x + offset * keyWidth - blackKeyWidth / 2, 0, blackKeyWidth, blackKeyHeight);
+                        ctx.fillStyle = '#fff'; // White text for black keys
+                        ctx.fillText(noteName, x + offset * keyWidth, blackKeyHeight - 5);
                     }
                 });
                 x += 7 * keyWidth;
             });
-
-            // Restore context
-            ctx.restore();
         }
 
         function updateTable() {
@@ -562,8 +527,6 @@
             const data = modesData[key][mode];
             const relativeModes = getRelativeModes(key, mode);
             document.getElementById('relativeModes').innerHTML = `You have selected <span>${key} ${mode}</span>, which is also the same note structure as: ${relativeModes.join(", ")}`;
-            document.getElementById('fretboardKeyMode').innerHTML = `(${key} ${mode})`;
-            document.getElementById('pianoKeyMode').innerHTML = `(${key} ${mode})`;
             document.getElementById('tableBody').innerHTML = `
                 <tr><td>Notes</td><td>${data.notes.join(", ")}</td></tr>
                 <tr><td>Intervals</td><td>${data.intervals.join(", ")}</td></tr>
