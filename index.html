@@ -204,7 +204,7 @@
             <div class="canvas-label">Guitar Fretboard <span id="fretboardKeyMode"></span></div>
             <canvas id="fretboardCanvas" width="840" height="150"></canvas>
             <div class="canvas-label">Piano Roll <span id="pianoKeyMode"></span></div>
-            <canvas id="pianoCanvas" width="840" height="100"></canvas>
+            <canvas id="pianoCanvas" width="840" height="120"></canvas>
         </div>
     </div>
     <script>
@@ -468,84 +468,75 @@
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const keyWidth = canvas.width / 24;
-            const blackKeyHeight = canvas.height * 0.6;
+            const blackKeyHeight = canvas.height * 0.6; // 72px with 120px height
             const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
             const blackKeyOffsets = [0, 1, 3, 4, 5]; // C#, D#, F#, G#, A#
             const octaves = [3, 4];
             const themeColorRgb = hexToRgb(themeColor);
 
-            // Draw white keys
+            // Save context to preserve state
+            ctx.save();
+
+            // Draw white keys and highlights
             let x = 0;
             ctx.fillStyle = '#fff';
             octaves.forEach(octave => {
                 whiteKeys.forEach(note => {
+                    const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
                     ctx.fillRect(x, 0, keyWidth, canvas.height);
+                    if (notes.includes(noteName)) {
+                        ctx.fillStyle = `rgba(${themeColorRgb}, 0.5)`;
+                        ctx.fillRect(x, 0, keyWidth, canvas.height);
+                    }
                     x += keyWidth;
                 });
+                x += 7 * keyWidth;
             });
 
-            // Draw black keys
+            // Draw black keys and highlights
             x = keyWidth / 2;
             octaves.forEach(octave => {
                 blackKeyOffsets.forEach(offset => {
                     ctx.fillStyle = '#000';
                     ctx.fillRect(x + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
-                });
-                x += 7 * keyWidth;
-            });
-
-            // Highlight active mode notes
-            ctx.fillStyle = `rgba(${themeColorRgb}, 0.5)`;
-            x = 0;
-            octaves.forEach(octave => {
-                whiteKeys.forEach(note => {
-                    const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
-                    if (notes.includes(noteName)) {
-                        ctx.fillRect(x, 0, keyWidth, canvas.height);
-                    }
-                    x += keyWidth;
-                });
-                blackKeyOffsets.forEach(offset => {
                     const semitone = (getSemitone(whiteKeys[offset % 7], currentNotation) + 1) % 12;
                     const noteName = getNoteFromSemitone(semitone, currentNotation);
                     if (notes.includes(noteName)) {
-                        ctx.fillRect(x - keyWidth / 2 + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
+                        ctx.fillStyle = `rgba(${themeColorRgb}, 0.5)`;
+                        ctx.fillRect(x + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
                     }
                 });
                 x += 7 * keyWidth;
             });
 
-            // Draw label backgrounds for white keys
+            // Draw label backgrounds and labels for white keys
             x = 0;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Darker background for contrast
             octaves.forEach(octave => {
                 whiteKeys.forEach(note => {
                     const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
                     if (notes.includes(noteName)) {
-                        ctx.fillRect(x, canvas.height - 20, keyWidth, 16);
-                    }
-                    x += keyWidth;
-                });
-                x += 7 * keyWidth;
-            });
-
-            // Draw labels for active notes
-            ctx.font = 'bold 12px Roboto';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            x = 0;
-            octaves.forEach(octave => {
-                whiteKeys.forEach(note => {
-                    const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
-                    if (notes.includes(noteName)) {
-                        ctx.fillStyle = '#000';
-                        ctx.strokeStyle = '#fff';
+                        ctx.fillRect(x, 80, keyWidth, 20); // 20px high background
+                        ctx.strokeStyle = '#ff0000'; // Red outline for debug
                         ctx.lineWidth = 1;
-                        ctx.strokeText(noteName, x + keyWidth / 2, canvas.height - 12);
-                        ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 12);
+                        ctx.strokeRect(x, 80, keyWidth, 20);
+                        ctx.fillStyle = themeColor;
+                        ctx.strokeStyle = '#000';
+                        ctx.lineWidth = 2;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.strokeText(noteName, x + keyWidth / 2, 90); // y = 90px, center of 80-100px
+                        ctx.fillText(noteName, x + keyWidth / 2, 90);
+                        console.log(`White key label: ${noteName} at x=${x + keyWidth / 2}, y=90`); // Debug log
                     }
                     x += keyWidth;
                 });
+                x += 7 * keyWidth;
+            });
+
+            // Draw labels for black keys (simplified)
+            x = keyWidth / 2;
+            octaves.forEach(octave => {
                 blackKeyOffsets.forEach(offset => {
                     const semitone = (getSemitone(whiteKeys[offset % 7], currentNotation) + 1) % 12;
                     const noteName = getNoteFromSemitone(semitone, currentNotation);
@@ -553,12 +544,15 @@
                         ctx.fillStyle = '#1a1a1a';
                         ctx.strokeStyle = '#000';
                         ctx.lineWidth = 0.5;
-                        ctx.strokeText(noteName, x - keyWidth / 2 + offset * keyWidth + keyWidth / 4, blackKeyHeight - 8);
-                        ctx.fillText(noteName, x - keyWidth / 2 + offset * keyWidth + keyWidth / 4, blackKeyHeight - 8);
+                        ctx.strokeText(noteName, x + offset * keyWidth + keyWidth / 4, blackKeyHeight - 8);
+                        ctx.fillText(noteName, x + offset * keyWidth + keyWidth / 4, blackKeyHeight - 8);
                     }
                 });
                 x += 7 * keyWidth;
             });
+
+            // Restore context
+            ctx.restore();
         }
 
         function updateTable() {
