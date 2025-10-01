@@ -1,126 +1,508 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MIDI Guitar Visualizer</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    header {
-      background: #222;
-      color: #fff;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-
-    main {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 2fr 1fr; /* Left: info, Center: fretboard, Right: controls */
-      gap: 1rem;
-      padding: 1rem;
-      overflow: hidden;
-    }
-
-    .panel {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 1rem;
-      overflow-y: auto;
-    }
-
-    #fretboard {
-      background: #fafafa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
-
-    /* Start screen overlay */
-    #start-screen {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      z-index: 10;
-    }
-
-    #start-screen button {
-      margin: 1rem;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #4caf50;
-      color: white;
-    }
-
-    #start-screen button:hover {
-      background: #45a049;
-    }
-
-    @media (max-width: 768px) {
-      main {
-        grid-template-columns: 1fr; /* Stack vertically on phones */
-        grid-template-rows: auto auto auto;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Theory Modes</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        h1 {
+            text-align: center;
+            color: #00ffcc;
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+            margin-bottom: 20px;
+        }
+        .relative-modes {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #e0e0e0;
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+        }
+        .relative-modes span {
+            color: #00ffcc;
+            font-weight: bold;
+        }
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: #3a3a3a;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        select:hover {
+            background: #4a4a4a;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        th {
+            background: #00ffcc;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        td {
+            background: #333;
+        }
+        tr:hover td {
+            background: #444;
+        }
+        .canvas-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        canvas {
+            background: #333;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+        }
+        .canvas-label {
+            font-size: 16px;
+            color: #00ffcc;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            select {
+                width: 100%;
+            }
+            th, td {
+                font-size: 14px;
+                padding: 10px;
+            }
+            .relative-modes {
+                font-size: 16px;
+            }
+            canvas {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-
-  <header>
-    🎸 MIDI Guitar Visualizer
-  </header>
-
-  <main>
-    <div id="midi-info" class="panel">
-      <h2>MIDI Info</h2>
-      <p>Auto-scrolling events will appear here...</p>
+    <div class="container">
+        <h1>Music Theory Modes</h1>
+        <div class="controls">
+            <select id="notationSelect">
+                <option value="sharp">Sharps</option>
+                <option value="flat">Flats</option>
+            </select>
+            <select id="tuningSelect">
+                <option value="standard">Standard Tuning</option>
+                <option value="dropd">Drop D Tuning</option>
+            </select>
+            <select id="stringOrderSelect">
+                <option value="highBottom">High String Bottom</option>
+                <option value="lowBottom">Low String Bottom</option>
+            </select>
+            <select id="keySelect">
+                <option value="C">C</option>
+                <option value="C#">C#</option>
+                <option value="D">D</option>
+                <option value="D#">D#</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#">F#</option>
+                <option value="G">G</option>
+                <option value="G#">G#</option>
+                <option value="A">A</option>
+                <option value="A#">A#</option>
+                <option value="B">B</option>
+            </select>
+            <select id="modeSelect">
+                <option value="Ionian">Ionian</option>
+                <option value="Dorian">Dorian</option>
+                <option value="Phrygian">Phrygian</option>
+                <option value="Lydian">Lydian</option>
+                <option value="Mixolydian">Mixolydian</option>
+                <option value="Aeolian">Aeolian</option>
+                <option value="Locrian">Locrian</option>
+            </select>
+        </div>
+        <div id="relativeModes" class="relative-modes"></div>
+        <table id="modeTable">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="canvas-container">
+            <div class="canvas-label">Guitar Fretboard</div>
+            <canvas id="fretboardCanvas" width="800" height="150"></canvas>
+            <div class="canvas-label">Piano Roll</div>
+            <canvas id="pianoCanvas" width="800" height="100"></canvas>
+        </div>
     </div>
-    <div id="fretboard" class="panel">
-      <p>[Guitar Fretboard Placeholder]</p>
-    </div>
-    <div id="controls" class="panel">
-      <h2>Controls</h2>
-      <button>▶ Play</button>
-      <button>⏸ Pause</button>
-      <button>⏹ Stop</button>
-    </div>
-  </main>
+    <script>
+        let currentNotation = 'sharp';
+        let currentTuning = 'standard';
+        let currentStringOrder = 'highBottom';
+        let modesData = {};
+        const modes = ["Ionian", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Aeolian", "Locrian"];
+        const sharpNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const flatNotes = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+        const intervalPatterns = {
+            Ionian: ["Root", "Major 2nd", "Major 3rd", "Perfect 4th", "Perfect 5th", "Major 6th", "Major 7th"],
+            Dorian: ["Root", "Major 2nd", "Minor 3rd", "Perfect 4th", "Perfect 5th", "Major 6th", "Minor 7th"],
+            Phrygian: ["Root", "Minor 2nd", "Minor 3rd", "Perfect 4th", "Perfect 5th", "Minor 6th", "Minor 7th"],
+            Lydian: ["Root", "Major 2nd", "Major 3rd", "Augmented 4th", "Perfect 5th", "Major 6th", "Major 7th"],
+            Mixolydian: ["Root", "Major 2nd", "Major 3rd", "Perfect 4th", "Perfect 5th", "Major 6th", "Minor 7th"],
+            Aeolian: ["Root", "Major 2nd", "Minor 3rd", "Perfect 4th", "Perfect 5th", "Minor 6th", "Minor 7th"],
+            Locrian: ["Root", "Minor 2nd", "Minor 3rd", "Perfect 4th", "Diminished 5th", "Minor 6th", "Minor 7th"]
+        };
+        const modePatterns = {
+            Ionian: [0, 2, 4, 5, 7, 9, 11],
+            Dorian: [0, 2, 3, 5, 7, 9, 10],
+            Phrygian: [0, 1, 3, 5, 7, 8, 10],
+            Lydian: [0, 2, 4, 6, 7, 9, 11],
+            Mixolydian: [0, 2, 4, 5, 7, 9, 10],
+            Aeolian: [0, 2, 3, 5, 7, 8, 10],
+            Locrian: [0, 1, 3, 5, 6, 8, 10]
+        };
+        const modeOffsets = {
+            Ionian: 0,
+            Dorian: 2,
+            Phrygian: 4,
+            Lydian: 5,
+            Mixolydian: 7,
+            Aeolian: 9,
+            Locrian: 11
+        };
+        const chordQualities = {
+            Ionian: ["maj", "min", "min", "maj", "maj", "min", "dim"],
+            Dorian: ["min", "min", "maj", "maj", "min", "dim", "maj"],
+            Phrygian: ["min", "maj", "maj", "min", "dim", "maj", "min"],
+            Lydian: ["maj", "maj", "min", "dim", "maj", "min", "min"],
+            Mixolydian: ["maj", "min", "dim", "maj", "min", "min", "maj"],
+            Aeolian: ["min", "dim", "maj", "min", "min", "maj", "maj"],
+            Locrian: ["dim", "maj", "min", "min", "maj", "maj", "min"]
+        };
+        const fourNoteQualities = {
+            Ionian: ["maj7", "min7", "min7", "maj7", "7", "min7", "min7b5"],
+            Dorian: ["min7", "min7", "maj7", "7", "min7", "min7b5", "maj7"],
+            Phrygian: ["min7", "maj7", "7", "min7", "min7b5", "maj7", "min7"],
+            Lydian: ["maj7", "7", "min7", "min7b5", "maj7", "min7", "min7"],
+            Mixolydian: ["7", "min7", "min7b5", "maj7", "min7", "min7", "maj7"],
+            Aeolian: ["min7", "min7b5", "maj7", "min7", "min7", "maj7", "7"],
+            Locrian: ["min7b5", "maj7", "min7", "min7", "maj7", "7", "min7"]
+        };
 
-  <!-- Start screen -->
-  <div id="start-screen">
-    <h1>Welcome</h1>
-    <button id="load-btn">Load</button>
-    <button id="old-btn">Old</button>
-  </div>
+        function getSemitone(note, notation) {
+            const sharpMap = { "C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11 };
+            const flatMap = { "C": 0, "Db": 1, "D": 2, "Eb": 3, "E": 4, "F": 5, "Gb": 6, "G": 7, "Ab": 8, "A": 9, "Bb": 10, "B": 11 };
+            return (notation === 'flat' ? flatMap : sharpMap)[note] || 0;
+        }
 
-  <script>
-    // Start screen dismissal logic
-    document.getElementById('load-btn').onclick = () => {
-      document.getElementById('start-screen').style.display = 'none';
-      // TODO: add file loading logic
-    };
+        function getNoteFromSemitone(semitone, notation) {
+            return (notation === 'flat' ? flatNotes : sharpNotes)[semitone];
+        }
 
-    document.getElementById('old-btn').onclick = () => {
-      document.getElementById('start-screen').style.display = 'none';
-      // TODO: fetch cached MIDI files
-    };
-  </script>
+        function getGuitarStrings(tuning) {
+            const standard = [
+                { note: "E", octave: 2, semitone: 4 },
+                { note: "A", octave: 2, semitone: 9 },
+                { note: "D", octave: 3, semitone: 2 },
+                { note: "G", octave: 3, semitone: 7 },
+                { note: "B", octave: 3, semitone: 11 },
+                { note: "E", octave: 4, semitone: 4 }
+            ];
+            if (tuning === 'dropd') {
+                standard[0] = { note: "D", octave: 2, semitone: 2 };
+            }
+            return standard;
+        }
+
+        function generateChords(notes, mode) {
+            const triads = [], fourNote = [], fiveNote = [], sixNote = [];
+            for (let i = 0; i < 7; i++) {
+                triads.push(`${notes[i]}${chordQualities[mode][i]}`);
+                fourNote.push(`${notes[i]}${fourNoteQualities[mode][i]}`);
+                fiveNote.push(`${notes[i]}${fourNoteQualities[mode][i].replace("7", "9")}`);
+                sixNote.push(`${notes[i]}${fourNoteQualities[mode][i].replace("7", "11")}`);
+            }
+            return { triads, fourNote, fiveNote, sixNote };
+        }
+
+        function generateData(notation) {
+            const notesList = notation === 'sharp' ? sharpNotes : flatNotes;
+            const data = {};
+            for (let rootName of notesList) {
+                const rootSemitone = getSemitone(rootName, notation);
+                data[rootName] = {};
+                for (let mode of modes) {
+                    const pattern = modePatterns[mode];
+                    const notes = pattern.map(p => getNoteFromSemitone((rootSemitone + p) % 12, notation));
+                    const chords = generateChords(notes, mode);
+                    data[rootName][mode] = {
+                        notes,
+                        intervals: intervalPatterns[mode],
+                        triads: chords.triads,
+                        fourNote: chords.fourNote,
+                        fiveNote: chords.fiveNote,
+                        sixNote: chords.sixNote
+                    };
+                }
+            }
+            return data;
+        }
+
+        function updateKeySelect() {
+            const keySelect = document.getElementById('keySelect');
+            keySelect.innerHTML = '';
+            const notesList = currentNotation === 'sharp' ? sharpNotes : flatNotes;
+            notesList.forEach(note => {
+                const option = document.createElement('option');
+                option.value = note;
+                option.textContent = note;
+                keySelect.appendChild(option);
+            });
+            keySelect.value = notesList.includes('C') ? 'C' : notesList[0];
+        }
+
+        function getRelativeModes(key, mode) {
+            const rootSemitone = getSemitone(key, currentNotation);
+            const modeOffset = modeOffsets[mode];
+            const parentIonianSemitone = (rootSemitone - modeOffset + 12) % 12;
+            const relatives = [];
+            modes.forEach(relMode => {
+                const relOffset = modeOffsets[relMode];
+                const relKeySemitone = (parentIonianSemitone + relOffset) % 12;
+                const relKey = getNoteFromSemitone(relKeySemitone, currentNotation);
+                if (`${relKey} ${relMode}` !== `${key} ${mode}`) {
+                    relatives.push(`${relKey} ${relMode}`);
+                }
+            });
+            return relatives;
+        }
+
+        function drawFretboard(notes) {
+            const canvas = document.getElementById('fretboardCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const guitarStrings = getGuitarStrings(currentTuning);
+            const stringSpacing = canvas.height / 6;
+            const fretSpacing = canvas.width / 13;
+            const noteRadius = 15;
+            const stringOrder = currentStringOrder === 'lowBottom' ? guitarStrings.slice().reverse() : guitarStrings;
+
+            // Draw strings
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * stringSpacing + stringSpacing / 2);
+                ctx.lineTo(canvas.width, i * stringSpacing + stringSpacing / 2);
+                ctx.stroke();
+            }
+
+            // Draw frets
+            for (let i = 0; i <= 12; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * fretSpacing, 0);
+                ctx.lineTo(i * fretSpacing, canvas.height);
+                ctx.stroke();
+            }
+
+            // Draw fret markers
+            const markers = [3, 5, 7, 9, 12];
+            ctx.fillStyle = '#666';
+            markers.forEach(fret => {
+                if (fret === 12) {
+                    ctx.beginPath();
+                    ctx.arc(fret * fretSpacing - fretSpacing / 2, stringSpacing * 1.5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(fret * fretSpacing - fretSpacing / 2, stringSpacing * 4.5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(fret * fretSpacing - fretSpacing / 2, canvas.height / 2, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Draw mode notes
+            ctx.fillStyle = '#00ffcc';
+            ctx.font = '12px Roboto';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            stringOrder.forEach((string, stringIndex) => {
+                const baseSemitone = getSemitone(string.note, currentNotation);
+                for (let fret = 0; fret <= 12; fret++) {
+                    const semitone = (baseSemitone + fret) % 12;
+                    const note = getNoteFromSemitone(semitone, currentNotation);
+                    if (notes.includes(note)) {
+                        const x = fret * fretSpacing + fretSpacing / 2;
+                        const y = stringIndex * stringSpacing + stringSpacing / 2;
+                        ctx.beginPath();
+                        ctx.arc(x, y, noteRadius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillText(note, x, y);
+                        ctx.fillStyle = '#00ffcc';
+                    }
+                }
+            });
+        }
+
+        function drawPianoRoll(notes) {
+            const canvas = document.getElementById('pianoCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const keyWidth = canvas.width / 24;
+            const blackKeyHeight = canvas.height * 0.6;
+            const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+            const blackKeyOffsets = [0, 1, 3, 4, 5]; // C#, D#, F#, G#, A#
+            const octaves = [3, 4];
+
+            // Draw white keys
+            let x = 0;
+            ctx.fillStyle = '#fff';
+            octaves.forEach(octave => {
+                whiteKeys.forEach(note => {
+                    ctx.fillRect(x, 0, keyWidth, canvas.height);
+                    x += keyWidth;
+                });
+            });
+
+            // Draw black keys
+            x = keyWidth / 2;
+            octaves.forEach(octave => {
+                blackKeyOffsets.forEach(offset => {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(x + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
+                });
+                x += 7 * keyWidth;
+            });
+
+            // Highlight mode notes
+            ctx.fillStyle = '#00ffcc';
+            ctx.font = '12px Roboto';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            x = 0;
+            octaves.forEach(octave => {
+                whiteKeys.forEach(note => {
+                    const noteName = currentNotation === 'sharp' ? note : flatNotes[sharpNotes.indexOf(note)];
+                    if (notes.includes(noteName)) {
+                        ctx.fillRect(x, 0, keyWidth, canvas.height);
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillText(noteName, x + keyWidth / 2, canvas.height - 5);
+                        ctx.fillStyle = '#00ffcc';
+                    }
+                    x += keyWidth;
+                });
+                blackKeyOffsets.forEach(offset => {
+                    const semitone = (getSemitone(whiteKeys[offset % 7], currentNotation) + 1) % 12;
+                    const noteName = getNoteFromSemitone(semitone, currentNotation);
+                    if (notes.includes(noteName)) {
+                        ctx.fillRect(x - keyWidth / 2 + offset * keyWidth, 0, keyWidth / 2, blackKeyHeight);
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillText(noteName, x - keyWidth / 2 + offset * keyWidth + keyWidth / 4, blackKeyHeight - 5);
+                        ctx.fillStyle = '#00ffcc';
+                    }
+                });
+                x += 7 * keyWidth;
+            });
+        }
+
+        function updateTable() {
+            const key = document.getElementById('keySelect').value;
+            const mode = document.getElementById('modeSelect').value;
+            if (!modesData[key] || !modesData[key][mode]) return;
+            const data = modesData[key][mode];
+            const relativeModes = getRelativeModes(key, mode);
+            document.getElementById('relativeModes').innerHTML = `You have selected <span>${key} ${mode}</span>, which is also the same note structure as: ${relativeModes.join(", ")}`;
+            document.getElementById('tableBody').innerHTML = `
+                <tr><td>Notes</td><td>${data.notes.join(", ")}</td></tr>
+                <tr><td>Intervals</td><td>${data.intervals.join(", ")}</td></tr>
+                <tr><td>Triads</td><td>${data.triads.join(", ")}</td></tr>
+                <tr><td>Four-Note Chords</td><td>${data.fourNote.join(", ")}</td></tr>
+                <tr><td>Five-Note Chords</td><td>${data.fiveNote.join(", ")}</td></tr>
+                <tr><td>Six-Note Chords</td><td>${data.sixNote.join(", ")}</td></tr>
+            `;
+            drawFretboard(data.notes);
+            drawPianoRoll(data.notes);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            currentNotation = 'sharp';
+            currentTuning = 'standard';
+            currentStringOrder = 'highBottom';
+            modesData = generateData(currentNotation);
+            updateKeySelect();
+            document.getElementById('notationSelect').addEventListener('change', (e) => {
+                currentNotation = e.target.value;
+                modesData = generateData(currentNotation);
+                updateKeySelect();
+                updateTable();
+            });
+            document.getElementById('tuningSelect').addEventListener('change', (e) => {
+                currentTuning = e.target.value;
+                updateTable();
+            });
+            document.getElementById('stringOrderSelect').addEventListener('change', (e) => {
+                currentStringOrder = e.target.value;
+                updateTable();
+            });
+            document.getElementById('keySelect').addEventListener('change', updateTable);
+            document.getElementById('modeSelect').addEventListener('change', updateTable);
+            updateTable();
+        });
+    </script>
 </body>
 </html>
