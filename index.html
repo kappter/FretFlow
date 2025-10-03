@@ -469,17 +469,22 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-    const blackKeyOffsets = [0, 1, 3, 4, 5]; // positions for sharps/flats
+    const blackKeyOffsets = [0, 1, 3, 4, 5];
     const themeColorRgb = hexToRgb(themeColor);
 
-    const numWhiteKeys = 14; // e.g. 2 octaves (C–B, twice)
+    const numWhiteKeys = 14; // 2 octaves
     const keyWidth = canvas.width / numWhiteKeys;
     const blackKeyHeight = canvas.height * 0.65;
+
+    // Which octave each white key belongs to
+    const startingOctave = 3;
 
     // --- White Keys ---
     for (let i = 0; i < numWhiteKeys; i++) {
         const x = i * keyWidth;
         const note = whiteKeys[i % 7];
+        const octave = startingOctave + Math.floor(i / 7);
+        const fullNote = note + octave;
 
         // Gradient fill
         const grad = ctx.createLinearGradient(x, 0, x, canvas.height);
@@ -499,16 +504,18 @@
             ctx.fillRect(x, 0, keyWidth, canvas.height);
         }
 
-        // Label under every white key
+        // Label
         ctx.font = notes.includes(note) ? 'bold 12px Roboto' : '11px Roboto';
         ctx.fillStyle = notes.includes(note) ? themeColor : "#333";
         ctx.textAlign = 'center';
-        ctx.fillText(note, x + keyWidth / 2, canvas.height - 12);
+        ctx.fillText(fullNote, x + keyWidth / 2, canvas.height - 12);
     }
 
     // --- Black Keys ---
     for (let i = 0; i < numWhiteKeys; i++) {
         const note = whiteKeys[i % 7];
+        const octave = startingOctave + Math.floor(i / 7);
+
         if (blackKeyOffsets.includes(i % 7)) {
             const x = (i + 1) * keyWidth - keyWidth / 4;
             const grad = ctx.createLinearGradient(x, 0, x, blackKeyHeight);
@@ -520,9 +527,26 @@
             ctx.roundRect(x - keyWidth / 4, 0, keyWidth / 2, blackKeyHeight, 3);
             ctx.fill();
             ctx.stroke();
+
+            // Black note name (C# / Db depending on setting)
+            const semitone = (getSemitone(note, 'sharp') + 1) % 12;
+            const blackNote = getNoteFromSemitone(semitone, currentNotation) + octave;
+
+            // Highlight if active
+            if (notes.includes(getNoteFromSemitone(semitone, currentNotation))) {
+                ctx.fillStyle = `rgba(${themeColorRgb},0.6)`;
+                ctx.fillRect(x - keyWidth / 4, 0, keyWidth / 2, blackKeyHeight);
+            }
+
+            // Label
+            ctx.font = notes.includes(getNoteFromSemitone(semitone, currentNotation)) ? 'bold 11px Roboto' : '10px Roboto';
+            ctx.fillStyle = notes.includes(getNoteFromSemitone(semitone, currentNotation)) ? themeColor : "#eee";
+            ctx.textAlign = 'center';
+            ctx.fillText(blackNote, x, blackKeyHeight - 10);
         }
     }
 }
+
 
 
 
