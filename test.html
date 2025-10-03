@@ -2,49 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Music Theory Modes</title>
     <style>
         :root {
             --theme-color: #00ffcc;
+            --theme-text: #e0e0e0;
+            --theme-bg: #2a2a2a;
+            --theme-high-contrast: #ffeb3b;
+            --theme-text-high-contrast: #ffffff;
+            --theme-bg-high-contrast: #1a1a1a;
         }
         body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
-            color: #e0e0e0;
+            color: var(--theme-text);
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            font-size: 16px;
+            line-height: 1.5;
         }
         .container {
-            max-width: 900px;
-            background: #2a2a2a;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(var(--theme-color-rgb, 0, 255, 204), 0.2);
+            max-width: 100%;
+            background: var(--theme-bg);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(var(--theme-color-rgb, 0, 255, 204), 0.2);
             transition: transform 0.3s ease;
         }
         .container:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
         }
         h1 {
             text-align: center;
             color: var(--theme-color);
-            text-shadow: 0 0 10px rgba(var(--theme-color-rgb, 0, 255, 204), 0.5);
-            margin-bottom: 20px;
+            text-shadow: 0 0 8px rgba(var(--theme-color-rgb, 0, 255, 204), 0.5);
+            margin-bottom: 15px;
+            font-size: 22px;
         }
         .relative-modes {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 18px;
-            color: #e0e0e0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: var(--theme-text);
             background: #333;
-            padding: 10px;
+            padding: 8px;
             border-radius: 5px;
-            box-shadow: 0 0 10px rgba(var(--theme-color-rgb, 0, 255, 204), 0.1);
         }
         .relative-modes span {
             color: var(--theme-color);
@@ -52,36 +59,53 @@
         }
         .controls {
             display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: stretch;
         }
-        select, input[type="color"] {
+        details summary {
+            font-size: 16px;
+            padding: 8px;
+            background: #3a3a3a;
+            border-radius: 5px;
+            cursor: pointer;
+            outline: none;
+        }
+        details[open] summary {
+            background: #4a4a4a;
+        }
+        select, input[type="color"], button {
             padding: 10px;
             font-size: 16px;
             border: none;
             border-radius: 5px;
             background: #3a3a3a;
-            color: #e0e0e0;
+            color: var(--theme-text);
             cursor: pointer;
             transition: background 0.3s ease;
+            height: 48px;
+            width: 100%;
+            box-sizing: border-box;
         }
-        select:hover, input[type="color"]:hover {
+        select:hover, input[type="color"]:hover, button:hover {
             background: #4a4a4a;
         }
         input[type="color"] {
-            width: 50px;
-            height: 40px;
-            padding: 5px;
+            height: 50px;
+        }
+        button {
+            background: var(--theme-color);
+            color: #1a1a1a;
+            font-weight: bold;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
         }
         th, td {
-            padding: 15px;
+            padding: 10px;
             text-align: left;
             border-bottom: 1px solid #444;
         }
@@ -98,132 +122,142 @@
             background: #444;
         }
         .canvas-container {
-            margin-top: 20px;
+            margin-top: 15px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            align-items: center;
+            gap: 15px;
+            align-items: stretch;
         }
         canvas {
             background: #333;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(var(--theme-color-rgb, 0, 255, 204), 0.1);
+            touch-action: pan-y;
+            max-width: 100%;
         }
         .canvas-label {
             font-size: 16px;
             color: var(--theme-color);
-            margin-bottom: 10px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
+            margin-bottom: 8px;
+            text-align: center;
         }
-        #fretboardCanvas {
-            margin-bottom: 20px;
+        .toggle-container {
+            text-align: center;
+            margin: 10px 0;
         }
-        @media (max-width: 600px) {
-            .container {
-                padding: 15px;
-            }
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-            select, input[type="color"] {
-                width: 100%;
-            }
-            th, td {
-                font-size: 14px;
-                padding: 10px;
-            }
-            .relative-modes {
-                font-size: 16px;
-            }
-            canvas {
-                width: 100%;
-            }
-            .canvas-label {
-                flex-direction: column;
-                align-items: center;
-            }
+        .high-contrast body {
+            background: var(--theme-bg-high-contrast);
+            color: var(--theme-text-high-contrast);
+        }
+        .high-contrast .container {
+            background: var(--theme-bg-high-contrast);
+        }
+        .high-contrast .relative-modes,
+        .high-contrast td {
+            background: #2c2c2c;
+        }
+        .high-contrast th {
+            background: var(--theme-high-contrast);
+        }
+        .high-contrast .relative-modes span,
+        .high-contrast .canvas-label,
+        .high-contrast h1 {
+            color: var(--theme-high-contrast);
+            text-shadow: 0 0 8px rgba(var(--theme-high-contrast-rgb, 255, 235, 59), 0.5);
+        }
+        @media (max-width: 480px) {
+            body { padding: 5px; }
+            .container { padding: 8px; }
+            h1 { font-size: 20px; }
+            .relative-modes { font-size: 14px; padding: 6px; }
+            table { display: block; overflow-x: auto; white-space: nowrap; }
+            th, td { font-size: 14px; padding: 6px; }
+            select, input[type="color"], button { font-size: 14px; height: 44px; }
+            #pianoCanvas { display: none; }
+            .piano-visible #pianoCanvas { display: block; }
+        }
+        @media (orientation: landscape) {
+            canvas { max-width: 80%; margin: 0 auto; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Music Theory Modes</h1>
-        <div class="controls">
-            <select id="notationSelect">
-                <option value="sharp">Sharps</option>
-                <option value="flat">Flats</option>
-            </select>
-            <select id="tuningSelect">
-                <option value="standard">Standard Tuning</option>
-                <option value="dropd">Drop D Tuning</option>
-            </select>
-            <select id="stringOrderSelect">
-                <option value="highBottom">High String Bottom</option>
-                <option value="lowBottom">Low String Bottom</option>
-            </select>
-            <input type="color" id="themeColor" value="#00ffcc" title="Select Theme Color">
-            <select id="keySelect">
-                <option value="C">C</option>
-                <option value="C#">C#</option>
-                <option value="D">D</option>
-                <option value="D#">D#</option>
-                <option value="E">E</option>
-                <option value="F">F</option>
-                <option value="F#">F#</option>
-                <option value="G">G</option>
-                <option value="G#">G#</option>
-                <option value="A">A</option>
-                <option value="A#">A#</option>
-                <option value="B">B</option>
-            </select>
-            <select id="modeSelect">
-                <!-- Major Scale Modes -->
-                <option value="Ionian">Ionian (Major)</option>
-                <option value="Dorian">Dorian</option>
-                <option value="Phrygian">Phrygian</option>
-                <option value="Lydian">Lydian</option>
-                <option value="Mixolydian">Mixolydian</option>
-                <option value="Aeolian">Aeolian (Natural Minor)</option>
-                <option value="Locrian">Locrian</option>
-
-                <!-- Pentatonic Scales -->
-                <option value="MajorPentatonic">Major Pentatonic</option>
-                <option value="MinorPentatonic">Minor Pentatonic</option>
-
-                <!-- Harmonic Minor and Modes -->
-                <option value="HarmonicMinor">Harmonic Minor</option>
-                <option value="LocrianNat6">Locrian ♮6</option>
-                <option value="IonianAug">Ionian Augmented</option>
-                <option value="DorianSharp4">Dorian ♯4</option>
-                <option value="PhrygianDominant">Phrygian Dominant</option>
-                <option value="LydianSharp2">Lydian ♯2</option>
-                <option value="SuperLocrianBB7">Super Locrian ♭♭7</option>
-
-                <!-- Melodic Minor and Modes -->
-                <option value="MelodicMinor">Melodic Minor</option>
-                <option value="DorianFlat2">Dorian ♭2</option>
-                <option value="LydianAugmented">Lydian Augmented</option>
-                <option value="LydianDominant">Lydian Dominant</option>
-                <option value="MixolydianFlat6">Mixolydian ♭6</option>
-                <option value="LocrianNat2">Locrian ♮2</option>
-                <option value="Altered">Altered Scale (Super Locrian)</option>
-
-                <!-- Other Scales -->
-                <option value="WholeTone">Whole Tone</option>
-                <option value="DiminishedHW">Diminished (Half–Whole)</option>
-                <option value="DiminishedWH">Diminished (Whole–Half)</option>
-                <option value="Blues">Blues Scale</option>
-
-                <!-- Bebop Scales -->
-                <option value="BebopMajor">Bebop Major</option>
-                <option value="BebopDominant">Bebop Dominant</option>
-                <option value="BebopDorian">Bebop Dorian</option>
-            </select>
+        <div class="toggle-container">
+            <button id="contrastToggle">Toggle High Contrast</button>
+            <button id="pianoToggle">Show Piano Roll</button>
+            <button id="fretboardToggle">Show Full Fretboard</button>
         </div>
+        <details open>
+            <summary>Settings</summary>
+            <div class="controls">
+                <select id="notationSelect" aria-label="Select note notation">
+                    <option value="sharp">Sharps</option>
+                    <option value="flat">Flats</option>
+                </select>
+                <select id="tuningSelect" aria-label="Select guitar tuning">
+                    <option value="standard">Standard Tuning</option>
+                    <option value="dropd">Drop D Tuning</option>
+                </select>
+                <select id="stringOrderSelect" aria-label="Select string order">
+                    <option value="highBottom">High String Bottom</option>
+                    <option value="lowBottom">Low String Bottom</option>
+                </select>
+                <input type="color" id="themeColor" value="#00ffcc" title="Select Theme Color" aria-label="Select theme color">
+            </div>
+        </details>
+        <details open>
+            <summary>Scale Selection</summary>
+            <div class="controls">
+                <select id="keySelect" aria-label="Select musical key">
+                    <option value="C">C</option>
+                    <option value="C#">C#</option>
+                    <option value="D">D</option>
+                    <option value="D#">D#</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#">F#</option>
+                    <option value="G">G</option>
+                    <option value="G#">G#</option>
+                    <option value="A">A</option>
+                    <option value="A#">A#</option>
+                    <option value="B">B</option>
+                </select>
+                <select id="modeSelect" aria-label="Select musical mode">
+                    <option value="Ionian">Ionian (Major)</option>
+                    <option value="Dorian">Dorian</option>
+                    <option value="Phrygian">Phrygian</option>
+                    <option value="Lydian">Lydian</option>
+                    <option value="Mixolydian">Mixolydian</option>
+                    <option value="Aeolian">Aeolian (Natural Minor)</option>
+                    <option value="Locrian">Locrian</option>
+                    <option value="MajorPentatonic">Major Pentatonic</option>
+                    <option value="MinorPentatonic">Minor Pentatonic</option>
+                    <option value="HarmonicMinor">Harmonic Minor</option>
+                    <option value="LocrianNat6">Locrian ♮6</option>
+                    <option value="IonianAug">Ionian Augmented</option>
+                    <option value="DorianSharp4">Dorian ♯4</option>
+                    <option value="PhrygianDominant">Phrygian Dominant</option>
+                    <option value="LydianSharp2">Lydian ♯2</option>
+                    <option value="SuperLocrianBB7">Super Locrian ♭♭7</option>
+                    <option value="MelodicMinor">Melodic Minor</option>
+                    <option value="DorianFlat2">Dorian ♭2</option>
+                    <option value="LydianAugmented">Lydian Augmented</option>
+                    <option value="LydianDominant">Lydian Dominant</option>
+                    <option value="MixolydianFlat6">Mixolydian ♭6</option>
+                    <option value="LocrianNat2">Locrian ♮2</option>
+                    <option value="Altered">Altered Scale (Super Locrian)</option>
+                    <option value="WholeTone">Whole Tone</option>
+                    <option value="DiminishedHW">Diminished (Half–Whole)</option>
+                    <option value="DiminishedWH">Diminished (Whole–Half)</option>
+                    <option value="Blues">Blues Scale</option>
+                    <option value="BebopMajor">Bebop Major</option>
+                    <option value="BebopDominant">Bebop Dominant</option>
+                    <option value="BebopDorian">Bebop Dorian</option>
+                </select>
+            </div>
+        </details>
         <div id="relativeModes" class="relative-modes"></div>
         <table id="modeTable">
             <thead>
@@ -236,9 +270,9 @@
         </table>
         <div class="canvas-container">
             <div class="canvas-label">Guitar Fretboard <span id="fretboardKeyMode"></span></div>
-            <canvas id="fretboardCanvas" width="840" height="150"></canvas>
-            <div class="canvas-label">Piano Roll <span id="pianoKeyMode"></span></div>
-            <canvas id="pianoCanvas" width="840" height="100"></canvas>
+            <canvas id="fretboardCanvas"></canvas>
+            <div class="canvas-label piano-label">Piano Roll <span id="pianoKeyMode"></span></div>
+            <canvas id="pianoCanvas"></canvas>
         </div>
     </div>
     <script>
@@ -247,6 +281,11 @@
         let currentStringOrder = 'highBottom';
         let themeColor = '#00ffcc';
         let modesData = {};
+        let debounceTimeout;
+        let isHighContrast = false;
+        let isFullFretboard = false;
+        let maxFrets = window.innerWidth <= 480 ? 8 : 14;
+
         const modes = ["Ionian", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Aeolian", "Locrian", "MajorPentatonic", "MinorPentatonic", "HarmonicMinor", "LocrianNat6", "IonianAug", "DorianSharp4", "PhrygianDominant", "LydianSharp2", "SuperLocrianBB7", "MelodicMinor", "DorianFlat2", "LydianAugmented", "LydianDominant", "MixolydianFlat6", "LocrianNat2", "Altered", "WholeTone", "DiminishedHW", "DiminishedWH", "Blues", "BebopMajor", "BebopDominant", "BebopDorian"];
         const sharpNotes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const flatNotes = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
@@ -331,18 +370,14 @@
             Mixolydian: ["maj", "min", "dim", "maj", "min", "min", "maj"],
             Aeolian: ["min", "dim", "maj", "min", "min", "maj", "maj"],
             Locrian: ["dim", "maj", "min", "min", "maj", "maj", "min"],
-            // Harmonic Minor base
             HarmonicMinor: ["min", "dim", "aug", "min", "maj", "maj", "dim"],
-            // Rotated for HM modes
             LocrianNat6: ["dim", "aug", "min", "maj", "maj", "dim", "min"],
             IonianAug: ["aug", "min", "maj", "maj", "dim", "min", "dim"],
             DorianSharp4: ["min", "maj", "maj", "dim", "min", "dim", "aug"],
             PhrygianDominant: ["maj", "maj", "dim", "min", "dim", "aug", "min"],
             LydianSharp2: ["maj", "dim", "min", "dim", "aug", "min", "maj"],
             SuperLocrianBB7: ["dim", "min", "dim", "aug", "min", "maj", "maj"],
-            // Melodic Minor base
             MelodicMinor: ["min", "dim", "aug", "min", "maj", "dim", "dim"],
-            // Rotated for MM modes
             DorianFlat2: ["dim", "aug", "min", "maj", "dim", "dim", "min"],
             LydianAugmented: ["aug", "min", "maj", "dim", "dim", "min", "dim"],
             LydianDominant: ["min", "maj", "dim", "dim", "min", "dim", "aug"],
@@ -358,18 +393,14 @@
             Mixolydian: ["7", "min7", "min7b5", "maj7", "min7", "min7", "maj7"],
             Aeolian: ["min7", "min7b5", "maj7", "min7", "min7", "maj7", "7"],
             Locrian: ["min7b5", "maj7", "min7", "min7", "maj7", "7", "min7"],
-            // Harmonic Minor base
             HarmonicMinor: ["minmaj7", "m7b5", "7#5", "m7", "maj7", "maj7", "dim7"],
-            // Rotated for HM modes
             LocrianNat6: ["m7b5", "7#5", "m7", "maj7", "maj7", "dim7", "minmaj7"],
             IonianAug: ["7#5", "m7", "maj7", "maj7", "dim7", "minmaj7", "m7b5"],
             DorianSharp4: ["m7", "maj7", "maj7", "dim7", "minmaj7", "m7b5", "7#5"],
             PhrygianDominant: ["maj7", "maj7", "dim7", "minmaj7", "m7b5", "7#5", "m7"],
             LydianSharp2: ["maj7", "dim7", "minmaj7", "m7b5", "7#5", "m7", "maj7"],
             SuperLocrianBB7: ["dim7", "minmaj7", "m7b5", "7#5", "m7", "maj7", "maj7"],
-            // Melodic Minor base
             MelodicMinor: ["minmaj7", "m7", "maj7#5", "7", "7", "m7b5", "m7b5"],
-            // Rotated for MM modes
             DorianFlat2: ["m7", "maj7#5", "7", "7", "m7b5", "m7b5", "minmaj7"],
             LydianAugmented: ["maj7#5", "7", "7", "m7b5", "m7b5", "minmaj7", "m7"],
             LydianDominant: ["7", "7", "m7b5", "m7b5", "minmaj7", "m7", "maj7#5"],
@@ -510,18 +541,27 @@
             return `${r}, ${g}, ${b}`;
         }
 
+        function resizeCanvases() {
+            const fretboard = document.getElementById('fretboardCanvas');
+            const piano = document.getElementById('pianoCanvas');
+            const maxWidth = Math.min(window.innerWidth - 20, 840);
+            fretboard.width = maxWidth;
+            fretboard.height = (maxWidth / 840) * 150;
+            piano.width = maxWidth;
+            piano.height = (maxWidth / 840) * 100;
+        }
+
         function drawFretboard(notes) {
             const canvas = document.getElementById('fretboardCanvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const guitarStrings = getGuitarStrings(currentTuning);
             const stringSpacing = canvas.height / 6;
-            const fretSpacing = canvas.width / 14; // 13 frets + nut
-            const noteRadius = 15;
+            const fretSpacing = canvas.width / maxFrets;
+            const noteRadius = Math.min(12, canvas.width / 70);
             const stringOrder = currentStringOrder === 'lowBottom' ? guitarStrings.slice().reverse() : guitarStrings;
 
-            // Draw strings
-            ctx.strokeStyle = '#e0e0e0';
+            ctx.strokeStyle = isHighContrast ? '#ffffff' : '#e0e0e0';
             ctx.lineWidth = 2;
             for (let i = 0; i < 6; i++) {
                 ctx.beginPath();
@@ -530,51 +570,47 @@
                 ctx.stroke();
             }
 
-            // Draw frets (nut at x=0, fret 1 at x=fretSpacing, etc.)
-            for (let i = 0; i <= 13; i++) {
-                ctx.lineWidth = (i === 1) ? 4 : 2; // Thicker line for fret 1
+            for (let i = 0; i < maxFrets; i++) {
+                ctx.lineWidth = (i === 1) ? 4 : 2;
                 ctx.beginPath();
                 ctx.moveTo(i * fretSpacing, 0);
                 ctx.lineTo(i * fretSpacing, canvas.height);
                 ctx.stroke();
             }
 
-            // Draw fret 1 label
-            ctx.fillStyle = themeColor;
+            ctx.fillStyle = isHighContrast ? '#ffeb3b' : themeColor;
             ctx.font = '10px Roboto';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             ctx.fillText('Fret 1', fretSpacing, 10);
 
-            // Draw fret markers at frets 3, 5, 7, 9, 12
-            const markers = [3, 5, 7, 9, 12];
-            ctx.fillStyle = '#888';
+            const markers = maxFrets > 8 ? [3, 5, 7, 9, 12] : [3, 5, 7];
+            ctx.fillStyle = isHighContrast ? '#cccccc' : '#888';
             markers.forEach(fret => {
+                if (fret >= maxFrets) return;
                 if (fret === 12) {
                     ctx.beginPath();
-                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 1.5, 10, 0, Math.PI * 2);
+                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 1.5, 8, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 4.5, 10, 0, Math.PI * 2);
+                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 4.5, 8, 0, Math.PI * 2);
                     ctx.fill();
                 } else {
                     ctx.beginPath();
-                    ctx.arc(fret * fretSpacing + fretSpacing / 2, canvas.height / 2, 10, 0, Math.PI * 2);
+                    ctx.arc(fret * fretSpacing + fretSpacing / 2, canvas.height / 2, 8, 0, Math.PI * 2);
                     ctx.fill();
                 }
             });
 
-            // Draw fret numbers
-            ctx.fillStyle = themeColor;
+            ctx.fillStyle = isHighContrast ? '#ffeb3b' : themeColor;
             ctx.font = '10px Roboto';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            for (let i = 0; i <= 12; i++) {
+            for (let i = 0; i < maxFrets - 1; i++) {
                 ctx.fillText(i, i * fretSpacing + fretSpacing / 2, canvas.height + 5);
             }
 
-            // Draw open string labels
-            ctx.fillStyle = themeColor;
+            ctx.fillStyle = isHighContrast ? '#ffeb3b' : themeColor;
             ctx.font = 'bold 12px Roboto';
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
@@ -583,14 +619,13 @@
                 ctx.fillText(label, 10, stringIndex * stringSpacing + stringSpacing / 2);
             });
 
-            // Draw mode notes (including open strings and fret 1)
-            ctx.fillStyle = themeColor;
+            ctx.fillStyle = isHighContrast ? '#ffeb3b' : themeColor;
             ctx.font = '12px Roboto';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             stringOrder.forEach((string, stringIndex) => {
                 const baseSemitone = getSemitone(string.note, currentNotation);
-                for (let fret = 0; fret <= 12; fret++) {
+                for (let fret = 0; fret < maxFrets - 1; fret++) {
                     const semitone = (baseSemitone + fret) % 12;
                     const note = getNoteFromSemitone(semitone, currentNotation);
                     if (notes.includes(note)) {
@@ -599,9 +634,9 @@
                         ctx.beginPath();
                         ctx.arc(x, y, noteRadius, 0, Math.PI * 2);
                         ctx.fill();
-                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillStyle = isHighContrast ? '#000000' : '#1a1a1a';
                         ctx.fillText(note, x, y);
-                        ctx.fillStyle = themeColor;
+                        ctx.fillStyle = isHighContrast ? '#ffeb3b' : themeColor;
                     }
                 }
             });
@@ -614,48 +649,41 @@
 
             const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
             const blackKeyOffsets = [0, 1, 3, 4, 5];
-            const themeColorRgb = hexToRgb(themeColor);
+            const themeColorRgb = hexToRgb(isHighContrast ? '#ffeb3b' : themeColor);
 
-            const numWhiteKeys = 14; // 2 octaves
+            const numWhiteKeys = 14;
             const keyWidth = canvas.width / numWhiteKeys;
             const blackKeyHeight = canvas.height * 0.65;
-
-            // Which octave each white key belongs to
             const startingOctave = 3;
 
-            // --- White Keys ---
             for (let i = 0; i < numWhiteKeys; i++) {
                 const x = i * keyWidth;
                 const note = whiteKeys[i % 7];
                 const octave = startingOctave + Math.floor(i / 7);
                 const fullNote = note + octave;
 
-                // Gradient fill
                 const grad = ctx.createLinearGradient(x, 0, x, canvas.height);
-                grad.addColorStop(0, "#fafafa");
-                grad.addColorStop(1, "#dcdcdc");
+                grad.addColorStop(0, isHighContrast ? "#ffffff" : "#fafafa");
+                grad.addColorStop(1, isHighContrast ? "#eeeeee" : "#dcdcdc");
                 ctx.fillStyle = grad;
-                ctx.strokeStyle = "#444";
+                ctx.strokeStyle = isHighContrast ? "#666666" : "#444";
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.roundRect(x, 0, keyWidth, canvas.height, 3);
                 ctx.fill();
                 ctx.stroke();
 
-                // Highlight if active
                 if (notes.includes(note)) {
                     ctx.fillStyle = `rgba(${themeColorRgb},0.35)`;
                     ctx.fillRect(x, 0, keyWidth, canvas.height);
                 }
 
-                // Label
                 ctx.font = notes.includes(note) ? 'bold 12px Roboto' : '11px Roboto';
-                ctx.fillStyle = notes.includes(note) ? themeColor : "#333";
+                ctx.fillStyle = notes.includes(note) ? (isHighContrast ? '#ffeb3b' : themeColor) : (isHighContrast ? "#666666" : "#333");
                 ctx.textAlign = 'center';
                 ctx.fillText(fullNote, x + keyWidth / 2, canvas.height - 12);
             }
 
-            // --- Black Keys ---
             for (let i = 0; i < numWhiteKeys; i++) {
                 const note = whiteKeys[i % 7];
                 const octave = startingOctave + Math.floor(i / 7);
@@ -663,28 +691,25 @@
                 if (blackKeyOffsets.includes(i % 7)) {
                     const x = (i + 1) * keyWidth - keyWidth / 4;
                     const grad = ctx.createLinearGradient(x, 0, x, blackKeyHeight);
-                    grad.addColorStop(0, "#333");
-                    grad.addColorStop(1, "#000");
+                    grad.addColorStop(0, isHighContrast ? "#444444" : "#333");
+                    grad.addColorStop(1, isHighContrast ? "#222222" : "#000");
                     ctx.fillStyle = grad;
-                    ctx.strokeStyle = "#111";
+                    ctx.strokeStyle = isHighContrast ? "#666666" : "#111";
                     ctx.beginPath();
                     ctx.roundRect(x - keyWidth / 4, 0, keyWidth / 2, blackKeyHeight, 3);
                     ctx.fill();
                     ctx.stroke();
 
-                    // Black note name (C# / Db depending on setting)
                     const semitone = (getSemitone(note, 'sharp') + 1) % 12;
                     const blackNote = getNoteFromSemitone(semitone, currentNotation) + octave;
 
-                    // Highlight if active
                     if (notes.includes(getNoteFromSemitone(semitone, currentNotation))) {
                         ctx.fillStyle = `rgba(${themeColorRgb},0.6)`;
                         ctx.fillRect(x - keyWidth / 4, 0, keyWidth / 2, blackKeyHeight);
                     }
 
-                    // Label
                     ctx.font = notes.includes(getNoteFromSemitone(semitone, currentNotation)) ? 'bold 11px Roboto' : '10px Roboto';
-                    ctx.fillStyle = notes.includes(getNoteFromSemitone(semitone, currentNotation)) ? themeColor : "#eee";
+                    ctx.fillStyle = notes.includes(getNoteFromSemitone(semitone, currentNotation)) ? (isHighContrast ? '#ffeb3b' : themeColor) : (isHighContrast ? "#ffffff" : "#eee");
                     ctx.textAlign = 'center';
                     ctx.fillText(blackNote, x, blackKeyHeight - 10);
                 }
@@ -710,22 +735,20 @@
                 <tr><td>Notes</td><td>${data.notes.join(", ")}</td></tr>
                 <tr><td>Intervals</td><td>${data.intervals.join(", ")}</td></tr>
                 <tr><td>Emotion/Feeling</td><td>${modeEmotions[mode] || "N/A"}</td></tr>
+                <tr><td>Triads</td><td>${data.triads.join(", ")}</td></tr>
+                <tr><td>Four-Note Chords</td><td>${data.fourNote.join(", ")}</td></tr>
             `;
-            if (data.triads.length > 0) {
-                tableHtml += `<tr><td>Triads</td><td>${data.triads.join(", ")}</td></tr>`;
-            }
-            if (data.fourNote.length > 0) {
-                tableHtml += `<tr><td>Four-Note Chords</td><td>${data.fourNote.join(", ")}</td></tr>`;
-            }
-            if (data.fiveNote.length > 0) {
-                tableHtml += `<tr><td>Five-Note Chords</td><td>${data.fiveNote.join(", ")}</td></tr>`;
-            }
-            if (data.sixNote.length > 0) {
-                tableHtml += `<tr><td>Six-Note Chords</td><td>${data.sixNote.join(", ")}</td></tr>`;
-            }
             document.getElementById('tableBody').innerHTML = tableHtml;
+            resizeCanvases();
             drawFretboard(data.notes);
             drawPianoRoll(data.notes);
+        }
+
+        function debounce(func, wait) {
+            return function() {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => func.apply(this, arguments), wait);
+            };
         }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -737,6 +760,7 @@
             document.documentElement.style.setProperty('--theme-color-rgb', hexToRgb(themeColor));
             modesData = generateData(currentNotation);
             updateKeySelect();
+
             document.getElementById('notationSelect').addEventListener('change', (e) => {
                 currentNotation = e.target.value;
                 modesData = generateData(currentNotation);
@@ -757,8 +781,40 @@
                 document.documentElement.style.setProperty('--theme-color-rgb', hexToRgb(themeColor));
                 updateTable();
             });
-            document.getElementById('keySelect').addEventListener('change', updateTable);
-            document.getElementById('modeSelect').addEventListener('change', updateTable);
+            document.getElementById('keySelect').addEventListener('change', debounce(updateTable, 300));
+            document.getElementById('modeSelect').addEventListener('change', debounce(updateTable, 300));
+            window.addEventListener('resize', debounce(() => {
+                maxFrets = window.innerWidth <= 480 && !isFullFretboard ? 8 : 14;
+                resizeCanvases();
+                updateTable();
+            }, 300));
+
+            document.getElementById('contrastToggle').addEventListener('click', () => {
+                isHighContrast = !isHighContrast;
+                document.body.classList.toggle('high-contrast');
+                document.getElementById('contrastToggle').textContent = isHighContrast ? 'Toggle Normal Contrast' : 'Toggle High Contrast';
+                document.documentElement.style.setProperty('--theme-color', isHighContrast ? '#ffeb3b' : themeColor);
+                document.documentElement.style.setProperty('--theme-color-rgb', hexToRgb(isHighContrast ? '#ffeb3b' : themeColor));
+                updateTable();
+            });
+
+            document.getElementById('pianoToggle').addEventListener('click', () => {
+                document.body.classList.toggle('piano-visible');
+                document.getElementById('pianoToggle').textContent = document.body.classList.contains('piano-visible') ? 'Hide Piano Roll' : 'Show Piano Roll';
+                if (document.body.classList.contains('piano-visible')) {
+                    resizeCanvases();
+                    drawPianoRoll(modesData[document.getElementById('keySelect').value][document.getElementById('modeSelect').value].notes);
+                }
+            });
+
+            document.getElementById('fretboardToggle').addEventListener('click', () => {
+                isFullFretboard = !isFullFretboard;
+                maxFrets = isFullFretboard ? 14 : (window.innerWidth <= 480 ? 8 : 14);
+                document.getElementById('fretboardToggle').textContent = isFullFretboard ? 'Show Compact Fretboard' : 'Show Full Fretboard';
+                updateTable();
+            });
+
+            resizeCanvases();
             updateTable();
         });
     </script>
