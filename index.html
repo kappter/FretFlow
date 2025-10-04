@@ -42,54 +42,543 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FretFlow</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/midi-parser-js@1.2.2/src/midi-parser.js"></script>
+    <title>Music Theory Modes</title>
+    <script src="https://cdn.jsdelivr.net/npm/midi-parser-js@latest/dist/midiparser.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #1a1a1a, #2c3e50);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: #111;
+            padding: 15px;
+            text-align: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .controls {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .controls-section {
+            background: #222;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        select, button, input[type="color"], input[type="range"] {
+            padding: 8px;
+            font-size: 1em;
+            border: none;
+            border-radius: 4px;
+            background: #333;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover, select:hover {
+            background: #444;
+        }
+        .columns {
+            display: flex;
+            max-width: 1200px;
+            margin: 20px auto;
+            flex: 1;
+            gap: 10px;
+        }
+        .column {
+            padding: 10px;
+            background: #282828;
+            border-radius: 4px;
+        }
+        .left, .right {
+            flex: 1;
+        }
+        .center {
+            flex: 2;
+            text-align: center;
+        }
+        .scroller {
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #444;
+            padding: 10px;
+            font-size: 0.9em;
+            background: #333;
+        }
+        canvas {
+            max-width: 100%;
+            background: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #333;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #444;
+        }
+        th {
+            background: var(--theme-color, #1e90ff);
+        }
+        footer {
+            background: #111;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8em;
+        }
+        @media (max-width: 768px) {
+            .columns {
+                flex-direction: column;
+            }
+            .column {
+                width: 100%;
+            }
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+        .midi-highlight {
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+    </style>
 </head>
 <body>
     <header>
-        <h1>FretFlow</h1>
+        <h1>Music Theory Modes</h1>
     </header>
 
-    <!-- Start Screen -->
-    <div id="start-screen" class="screen">
-        <button id="load-btn">Load MIDI</button>
-        <select id="sample-select">
-            <option value="">Select Sample MIDI</option>
-            <option value="sample1">Sample: C Major Scale</option>
-            <option value="sample2">Sample: Blues Riff</option>
-            <option value="sample3">Sample: Twinkle Twinkle</option>
-            <option value="sample4">Sample: Chord Progression</option>
-            <option value="sample5">Sample: Arpeggio Study</option>
-            <option value="sample6">Sample: Simple Melody</option>
-        </select>
+    <div class="controls">
+        <div class="controls-section">
+            <select id="key-select">
+                <option value="C">C</option>
+                <option value="C#">C#</option>
+                <option value="D">D</option>
+                <option value="D#">D#</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#">F#</option>
+                <option value="G">G</option>
+                <option value="G#">G#</option>
+                <option value="A">A</option>
+                <option value="A#">A#</option>
+                <option value="B">B</option>
+            </select>
+            <select id="mode-select">
+                <option value="ionian">Ionian (Major)</option>
+                <option value="dorian">Dorian</option>
+                <option value="phrygian">Phrygian</option>
+                <option value="lydian">Lydian</option>
+                <option value="mixolydian">Mixolydian</option>
+                <option value="aeolian">Aeolian (Natural Minor)</option>
+                <option value="locrian">Locrian</option>
+                <option value="major-pentatonic">Major Pentatonic</option>
+                <option value="minor-pentatonic">Minor Pentatonic</option>
+                <!-- Add other modes as in index (1).html -->
+            </select>
+        </div>
+        <div class="controls-section">
+            <select id="notation">
+                <option value="sharps">Sharps</option>
+                <option value="flats">Flats</option>
+            </select>
+            <select id="tuning">
+                <option value="standard">Standard Tuning</option>
+                <option value="drop-d">Drop D Tuning</option>
+            </select>
+            <select id="string-order">
+                <option value="high-bottom">High String Bottom</option>
+                <option value="low-bottom">Low String Bottom</option>
+            </select>
+            <input type="color" id="theme-color" value="#1e90ff">
+        </div>
+        <div class="controls-section" id="midi-controls">
+            <button id="load-midi">Load MIDI</button>
+            <select id="sample-midi">
+                <option value="">Select Sample MIDI</option>
+                <option value="c-major">C Major Scale</option>
+                <option value="blues">Blues Riff</option>
+                <option value="twinkle">Twinkle Twinkle</option>
+                <option value="chords">Chord Progression</option>
+                <option value="arpeggio">Arpeggio Study</option>
+            </select>
+            <div style="display: flex; gap: 5px; margin-top: 10px;">
+                <button id="play-midi">Play</button>
+                <button id="pause-midi">Pause</button>
+                <button id="stop-midi">Stop</button>
+            </div>
+            <label>Speed: <input type="range" id="playback-speed" min="0.25" max="2" step="0.25" value="1"></label>
+            <div id="midi-info" class="scroller"></div>
+        </div>
     </div>
 
-    <!-- Main App -->
-    <div id="main-app" class="screen hidden">
-        <div class="columns">
-            <div class="column left">
-                <div id="midi-info" class="scroller"></div>
-            </div>
-            <div class="column center">
-                <svg id="fretboard" width="600" height="400" viewBox="0 0 600 400"></svg>
-            </div>
-            <div class="column right">
-                <div id="controls">
-                    <button id="play-btn">Play</button>
-                    <button id="pause-btn">Pause</button>
-                    <button id="stop-btn">Stop</button>
-                    <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1" title="Playback Speed">
-                    <button id="upload-btn">Upload MIDI</button>
-                </div>
-            </div>
+    <div class="columns">
+        <div class="column left">
+            <h2 id="fretboard-label">Guitar Fretboard</h2>
+            <canvas id="fretboard" width="800" height="400"></canvas>
+        </div>
+        <div class="column center">
+            <h2 id="piano-label">Piano Roll</h2>
+            <canvas id="piano-roll" width="800" height="200"></canvas>
+        </div>
+        <div class="column right">
+            <h2>Mode Details</h2>
+            <table id="mode-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Notes</td><td id="notes"></td></tr>
+                    <tr><td>Intervals</td><td id="intervals"></td></tr>
+                    <tr><td>Triads</td><td id="triads"></td></tr>
+                    <tr><td>Four-Note Chords</td><td id="four-chords"></td></tr>
+                    <tr><td>Five-Note Chords</td><td id="five-chords"></td></tr>
+                    <tr><td>Six-Note Chords</td><td id="six-chords"></td></tr>
+                    <tr><td>Emotional Characteristics</td><td id="emotion"></td></tr>
+                    <tr><td>Relative Modes</td><td id="relative-modes"></td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <footer>
-        <p>© 2025 FretFlow</p>
+        © 2025 Music Theory Modes
     </footer>
 
-    <script src="script.js"></script>
+    <script>
+        // MIDI playback state
+        let midiNotes = [];
+        let playbackTime = 0;
+        let isPlaying = false;
+        let playbackTimer = null;
+
+        // Guitar tuning (MIDI note numbers)
+        const tunings = {
+            standard: [40, 45, 50, 55, 59, 64], // E2 A2 D3 G3 B3 E4
+            'drop-d': [38, 45, 50, 55, 59, 64] // D2 A2 D3 G3 B3 E4
+        };
+        let currentTuning = tunings.standard;
+
+        // Mode definitions (simplified; expand with your full mode logic)
+        const modes = {
+            ionian: [0, 2, 4, 5, 7, 9, 11],
+            dorian: [0, 2, 3, 5, 7, 9, 10],
+            phrygian: [0, 1, 3, 5, 7, 8, 10],
+            lydian: [0, 2, 4, 6, 7, 9, 11],
+            mixolydian: [0, 2, 4, 5, 7, 9, 10],
+            aeolian: [0, 2, 3, 5, 7, 8, 10],
+            locrian: [0, 1, 3, 5, 6, 8, 10],
+            'major-pentatonic': [0, 2, 4, 7, 9],
+            'minor-pentatonic': [0, 3, 5, 7, 10]
+            // Add other modes from index (1).html
+        };
+
+        // Note to name (handles sharps/flats)
+        function noteToName(noteNumber, useFlats = false) {
+            const sharpNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const flatNames = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+            const names = useFlats ? flatNames : sharpNames;
+            const octave = Math.floor(noteNumber / 12) - 1;
+            const note = names[noteNumber % 12];
+            return `${note}${octave}`;
+        }
+
+        // Parse MIDI file
+        function parseMidi(data) {
+            const midi = MidiParser.parse(data);
+            const notes = [];
+            let currentTime = 0;
+            midi.track.forEach(track => {
+                let deltaTime = 0;
+                track.event.forEach(event => {
+                    deltaTime += event.deltaTime;
+                    if (event.type === 9 && event.data[1] > 0) { // Note On
+                        const noteNumber = event.data[0];
+                        notes.push({
+                            number: noteNumber,
+                            name: noteToName(noteNumber, document.getElementById('notation').value === 'flats'),
+                            time: currentTime / (midi.timeDivision || 480) / 2, // Approx seconds
+                            velocity: event.data[1]
+                        });
+                    }
+                    currentTime += deltaTime;
+                });
+            });
+            return notes.sort((a, b) => a.time - b.time);
+        }
+
+        // Load MIDI file
+        document.getElementById('load-midi').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.mid,.midi';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = e => {
+                    midiNotes = parseMidi(e.target.result);
+                    document.getElementById('midi-controls').style.display = 'block';
+                    updateVisuals();
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        });
+
+        // Sample MIDI (simulated C major scale)
+        document.getElementById('sample-midi').addEventListener('change', e => {
+            if (e.target.value) {
+                midiNotes = [
+                    { number: 60, name: noteToName(60), time: 0, velocity: 64 },
+                    { number: 62, name: noteToName(62), time: 0.5, velocity: 64 },
+                    { number: 64, name: noteToName(64), time: 1, velocity: 64 },
+                    { number: 65, name: noteToName(65), time: 1.5, velocity: 64 },
+                    { number: 67, name: noteToName(67), time: 2, velocity: 64 },
+                    { number: 69, name: noteToName(69), time: 2.5, velocity: 64 },
+                    { number: 71, name: noteToName(71), time: 3, velocity: 64 },
+                    { number: 72, name: noteToName(72), time: 3.5, velocity: 64 }
+                ]; // C4 to C5
+                document.getElementById('midi-controls').style.display = 'block';
+                updateVisuals();
+            }
+        });
+
+        // Playback controls
+        function startPlayback() {
+            if (isPlaying || midiNotes.length === 0) return;
+            isPlaying = true;
+            playbackTime = 0;
+            document.getElementById('midi-info').innerHTML = '';
+            const speed = parseFloat(document.getElementById('playback-speed').value) || 1;
+            playbackTimer = setInterval(() => {
+                playbackTime += 0.016 / speed; // ~60fps
+                const activeNotes = midiNotes.filter(note => Math.abs(note.time - playbackTime) < 0.1);
+                activeNotes.forEach(note => {
+                    document.getElementById('midi-info').innerHTML += `Note: ${note.name} (${note.number}) at ${playbackTime.toFixed(2)}s<br>`;
+                    document.getElementById('midi-info').scrollTop = document.getElementById('midi-info').scrollHeight;
+                });
+                updateVisuals(playbackTime);
+                if (playbackTime > midiNotes[midiNotes.length - 1]?.time + 1) stopPlayback();
+            }, 16);
+        }
+
+        function pausePlayback() {
+            if (isPlaying) {
+                clearInterval(playbackTimer);
+                isPlaying = false;
+            }
+        }
+
+        function stopPlayback() {
+            clearInterval(playbackTimer);
+            isPlaying = false;
+            playbackTime = 0;
+            document.getElementById('midi-info').innerHTML = '';
+            updateVisuals();
+        }
+
+        document.getElementById('play-midi').addEventListener('click', startPlayback);
+        document.getElementById('pause-midi').addEventListener('click', pausePlayback);
+        document.getElementById('stop-midi').addEventListener('click', stopPlayback);
+        document.getElementById('playback-speed').addEventListener('input', () => {
+            if (isPlaying) {
+                pausePlayback();
+                startPlayback();
+            }
+        });
+
+        // Highlight MIDI notes
+        function highlightMidiNotes(ctxFret, ctxPiano, tuning, playbackTime) {
+            const activeNotes = midiNotes.filter(note => Math.abs(note.time - playbackTime) < 0.1);
+            activeNotes.forEach(note => {
+                // Fretboard: Orange circles, velocity-scaled
+                for (let str = 0; str < 6; str++) {
+                    const fret = note.number - tuning[str];
+                    if (fret >= 0 && fret <= 12) {
+                        const x = 50 + fret * 50;
+                        const y = document.getElementById('string-order').value === 'high-bottom' ? 30 + (5 - str) * 60 : 30 + str * 60;
+                        const radius = 8 + (note.velocity / 127) * 4;
+                        ctxFret.beginPath();
+                        ctxFret.arc(x, y, radius, 0, 2 * Math.PI);
+                        ctxFret.fillStyle = `rgba(255, 165, 0, 0.7)`; // Orange, matches theme
+                        ctxFret.fill();
+                    }
+                }
+
+                // Piano roll: Red rectangles, velocity-based opacity
+                const keyIndex = note.number - 48; // C3 base
+                if (keyIndex >= 0 && keyIndex < 24) {
+                    const isBlackKey = [1, 3, 6, 8, 10].includes(keyIndex % 12);
+                    const x = 50 + (keyIndex % 12) * 50;
+                    const y = 50 + Math.floor(keyIndex / 12) * 80;
+                    ctxPiano.fillStyle = `rgba(255, 0, 0, ${note.velocity / 127})`; // Red, velocity-based
+                    ctxPiano.fillRect(x, isBlackKey ? 20 : 0, 45, isBlackKey ? 50 : 80);
+                }
+            });
+        }
+
+        // Draw fretboard (styled to match musicTheory)
+        function drawFretboard(ctx, tuning) {
+            ctx.clearRect(0, 0, 800, 400);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#000';
+            const isHighBottom = document.getElementById('string-order').value === 'high-bottom';
+
+            // Strings
+            for (let i = 0; i < 6; i++) {
+                const strIndex = isHighBottom ? 5 - i : i;
+                const y = 30 + i * 60;
+                ctx.beginPath();
+                ctx.moveTo(50, y);
+                ctx.lineTo(650, y);
+                ctx.stroke();
+                // String label
+                ctx.fillText(noteToName(tuning[strIndex], document.getElementById('notation').value === 'flats'), 20, y + 5);
+            }
+
+            // Frets
+            for (let f = 0; f <= 12; f++) {
+                const x = 50 + f * 50;
+                ctx.beginPath();
+                ctx.moveTo(x, 30);
+                ctx.lineTo(x, 330);
+                ctx.stroke();
+                // Fret number
+                ctx.fillText(f, x - 5, 20);
+            }
+
+            // Fret markers
+            [3, 5, 7, 9, 12].forEach(f => {
+                const x = 50 + f * 50;
+                ctx.beginPath();
+                ctx.arc(x, 180, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = 'gray';
+                ctx.fill();
+            });
+
+            // Mode notes
+            const key = document.getElementById('key-select').value;
+            const mode = modes[document.getElementById('mode-select').value] || modes.ionian;
+            const root = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(key);
+            const useFlats = document.getElementById('notation').value === 'flats';
+            mode.forEach(interval => {
+                const note = (root + interval) % 12 + 36; // C3 range for visibility
+                for (let str = 0; str < 6; str++) {
+                    const fret = note - tuning[str];
+                    if (fret >= 0 && fret <= 12) {
+                        const x = 50 + fret * 50;
+                        const y = isHighBottom ? 30 + (5 - str) * 60 : 30 + str * 60;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+                        ctx.fillStyle = document.getElementById('theme-color').value;
+                        ctx.fill();
+                        // Note label
+                        ctx.fillStyle = '#000';
+                        ctx.fillText(noteToName(note, useFlats), x - 10, y + 20);
+                    }
+                }
+            });
+        }
+
+        // Draw piano roll (placeholder; merge with your logic)
+        function drawPianoRoll(ctx) {
+            ctx.clearRect(0, 0, 800, 200);
+            ctx.font = '10px Arial';
+            for (let i = 0; i < 24; i++) {
+                const isBlackKey = [1, 3, 6, 8, 10].includes(i % 12);
+                const x = 50 + (i % 12) * 50;
+                const y = 50 + Math.floor(i / 12) * 80;
+                ctx.fillStyle = isBlackKey ? '#000' : '#fff';
+                ctx.fillRect(x, isBlackKey ? 20 : 0, 45, isBlackKey ? 50 : 80);
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(x, isBlackKey ? 20 : 0, 45, isBlackKey ? 50 : 80);
+                ctx.fillStyle = '#000';
+                ctx.fillText(noteToName(i + 48, document.getElementById('notation').value === 'flats'), x + 10, isBlackKey ? 40 : 100);
+            }
+
+            // Mode notes
+            const key = document.getElementById('key-select').value;
+            const mode = modes[document.getElementById('mode-select').value] || modes.ionian;
+            const root = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(key);
+            const useFlats = document.getElementById('notation').value === 'flats';
+            mode.forEach(interval => {
+                const note = (root + interval) % 12 + 48; // C3-B4
+                const keyIndex = note - 48;
+                if (keyIndex >= 0 && keyIndex < 24) {
+                    const isBlackKey = [1, 3, 6, 8, 10].includes(keyIndex % 12);
+                    const x = 50 + (keyIndex % 12) * 50;
+                    const y = 50 + Math.floor(keyIndex / 12) * 80;
+                    ctx.fillStyle = document.getElementById('theme-color').value;
+                    ctx.fillRect(x, isBlackKey ? 20 : 0, 45, isBlackKey ? 50 : 80);
+                    ctx.fillStyle = '#000';
+                    ctx.fillText(noteToName(note, useFlats), x + 10, isBlackKey ? 40 : 100);
+                }
+            });
+        }
+
+        // Update visuals
+        function updateVisuals(playbackTime = null) {
+            const ctxFret = document.getElementById('fretboard').getContext('2d');
+            const ctxPiano = document.getElementById('piano-roll').getContext('2d');
+            const tuning = tunings[document.getElementById('tuning').value];
+
+            // Redraw static visuals
+            drawFretboard(ctxFret, tuning);
+            drawPianoRoll(ctxPiano);
+
+            // Add MIDI highlights if playing
+            if (playbackTime !== null) {
+                highlightMidiNotes(ctxFret, ctxPiano, tuning, playbackTime);
+            }
+
+            // Update labels
+            const key = document.getElementById('key-select').value;
+            const mode = document.getElementById('mode-select').value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            document.getElementById('fretboard-label').textContent = `Guitar Fretboard (${key} ${mode})`;
+            document.getElementById('piano-label').textContent = `Piano Roll (${key} ${mode})`;
+
+            // Update mode table (placeholder; merge your logic)
+            const root = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(key);
+            const modeNotes = modes[document.getElementById('mode-select').value].map(i => noteToName((root + i) % 12 + 48, document.getElementById('notation').value === 'flats'));
+            document.getElementById('notes').textContent = modeNotes.join(', ');
+            // Add intervals, chords, etc.
+        }
+
+        // Initialize
+        document.getElementById('key-select').addEventListener('change', updateVisuals);
+        document.getElementById('mode-select').addEventListener('change', updateVisuals);
+        document.getElementById('notation').addEventListener('change', updateVisuals);
+        document.getElementById('tuning').addEventListener('change', updateVisuals);
+        document.getElementById('string-order').addEventListener('change', updateVisuals);
+        document.getElementById('theme-color').addEventListener('change', () => {
+            document.documentElement.style.setProperty('--theme-color', document.getElementById('theme-color').value);
+            updateVisuals();
+        });
+        updateVisuals();
+    </script>
 </body>
 </html>
