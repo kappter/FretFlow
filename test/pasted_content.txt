@@ -1,0 +1,315 @@
+
+        function generateData(notation) {
+            const notesList = notation === 'sharp' ? sharpNotes : flatNotes;
+            const data = {};
+            for (let rootName of notesList) {
+                const rootSemitone = getSemitone(rootName, notation);
+                data[rootName] = {};
+                for (let mode of modes) {
+                    const pattern = modePatterns[mode];
+                    const notes = pattern.map(p => getNoteFromSemitone((rootSemitone + p) % 12, notation));
+                    const chords = generateChords(notes, mode);
+                    data[rootName][mode] = {
+                        notes,
+                        intervals: intervalPatterns[mode],
+                        triads: chords.triads,
+                        fourNote: chords.fourNote,
+                        fiveNote: chords.fiveNote,
+                        sixNote: chords.sixNote
+                    };
+                }
+            }
+            return data;
+        }
+
+        function updateKeySelect() {
+            const keySelect = document.getElementById('keySelect');
+            keySelect.innerHTML = '';
+            const notesList = currentNotation === 'sharp' ? sharpNotes : flatNotes;
+            notesList.forEach(note => {
+                const option = document.createElement('option');
+                option.value = note;
+                option.textContent = note;
+                keySelect.appendChild(option);
+            });
+            keySelect.value = notesList.includes('C') ? 'C' : notesList[0];
+        }
+
+        function getRelativeModes(key, mode) {
+            if (!modeOffsets[mode]) return [];
+            const rootSemitone = getSemitone(key, currentNotation);
+            const modeOffset = modeOffsets[mode];
+            const parentIonianSemitone = (rootSemitone - modeOffset + 12) % 12;
+            const relatives = [];
+            Object.keys(modeOffsets).forEach(relMode => {
+                const relOffset = modeOffsets[relMode];
+                const relKeySemitone = (parentIonianSemitone + relOffset) % 12;
+                const relKey = getNoteFromSemitone(relKeySemitone, currentNotation);
+                if (`${relKey} ${relMode}` !== `${key} ${mode}`) {
+                    relatives.push(`${relKey} ${relMode}`);
+                }
+            });
+            return relatives;
+        }
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `${r}, ${g}, ${b}`;
+        }
+
+        function drawFretboard(notes) {
+            const canvas = document.getElementById('fretboardCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const guitarStrings = getGuitarStrings(currentTuning);
+            const stringSpacing = canvas.height / 6;
+            const fretSpacing = canvas.width / 14; // 13 frets + nut
+            const noteRadius = 15;
+            const stringOrder = currentStringOrder === 'lowBottom' ? guitarStrings.slice().reverse() : guitarStrings;
+
+            // Draw strings
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * stringSpacing + stringSpacing / 2);
+                ctx.lineTo(canvas.width, i * stringSpacing + stringSpacing / 2);
+                ctx.stroke();
+            }
+
+            // Draw frets (nut at x=0, fret 1 at x=fretSpacing, etc.)
+            for (let i = 0; i <= 13; i++) {
+                ctx.lineWidth = (i === 1) ? 4 : 2; // Thicker line for fret 1
+                ctx.beginPath();
+                ctx.moveTo(i * fretSpacing, 0);
+                ctx.lineTo(i * fretSpacing, canvas.height);
+                ctx.stroke();
+            }
+
+            // Draw fret 1 label
+            ctx.fillStyle = themeColor;
+            ctx.font = '10px Roboto';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('Fret 1', fretSpacing, 10);
+
+            // Draw fret markers at frets 3, 5, 7, 9, 12
+            const markers = [3, 5, 7, 9, 12];
+            ctx.fillStyle = '#888';
+            markers.forEach(fret => {
+                if (fret === 12) {
+                    ctx.beginPath();
+                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 1.5, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(fret * fretSpacing + fretSpacing / 2, stringSpacing * 4.5, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(fret * fretSpacing + fretSpacing / 2, canvas.height / 2, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Draw fret numbers
+            ctx.fillStyle = themeColor;
+            ctx.font = '10px Roboto';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            for (let i = 0; i <= 12; i++) {
+                ctx.fillText(i, i * fretSpacing + fretSpacing / 2, canvas.height + 5);
+            }
+
+            // Draw open string labels
+            ctx.fillStyle = themeColor;
+            ctx.font = 'bold 12px Roboto';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            stringOrder.forEach((string, stringIndex) => {
+                const label = `${string.note}${string.octave}`;
+                ctx.fillText(label, 10, stringIndex * stringSpacing + stringSpacing / 2);
+            });
+
+            // Draw mode notes (including open strings and fret 1)
+            ctx.fillStyle = themeColor;
+            ctx.font = '12px Roboto';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            stringOrder.forEach((string, stringIndex) => {
+                const baseSemitone = getSemitone(string.note, currentNotation);
+                for (let fret = 0; fret <= 12; fret++) {
+                    const semitone = (baseSemitone + fret) % 12;
+                    const note = getNoteFromSemitone(semitone, currentNotation);
+                    if (notes.includes(note)) {
+                        const x = fret * fretSpacing + fretSpacing / 2;
+                        const y = stringIndex * stringSpacing + stringSpacing / 2;
+                        ctx.beginPath();
+                        ctx.arc(x, y, noteRadius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillText(note, x, y);
+                        ctx.fillStyle = themeColor;
+                    }
+                }
+            });
+        }
+
+        function drawPianoRoll(notes) {
+            const canvas = document.getElementById('pianoCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+            const blackKeyOffsets = [0, 1, 3, 4, 5];
+            const themeColorRgb = hexToRgb(themeColor);
+
+            const numWhiteKeys = 14; // 2 octaves
+            const keyWidth = canvas.width / numWhiteKeys;
+            const blackKeyHeight = canvas.height * 0.65;
+
+            // Which octave each white key belongs to
+            const startingOctave = 3;
+
+            // --- White Keys ---
+            for (let i = 0; i < numWhiteKeys; i++) {
+                const x = i * keyWidth;
+                const note = whiteKeys[i % 7];
+                const octave = startingOctave + Math.floor(i / 7);
+                const fullNote = note + octave;
+
+                // Gradient fill
+                const grad = ctx.createLinearGradient(x, 0, x, canvas.height);
+                grad.addColorStop(0, "#fafafa");
+                grad.addColorStop(1, "#dcdcdc");
+                ctx.fillStyle = grad;
+                ctx.strokeStyle = "#444";
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.roundRect(x, 0, keyWidth, canvas.height, 3);
+                ctx.fill();
+                ctx.stroke();
+
+                // Highlight if active
+                if (notes.includes(note)) {
+                    ctx.fillStyle = `rgba(${themeColorRgb},0.35)`;
+                    ctx.fillRect(x, 0, keyWidth, canvas.height);
+                }
+
+                // Label
+                ctx.font = notes.includes(note) ? 'bold 12px Roboto' : '11px Roboto';
+                ctx.fillStyle = notes.includes(note) ? themeColor : "#333";
+                ctx.textAlign = 'center';
+                ctx.fillText(fullNote, x + keyWidth / 2, canvas.height - 12);
+            }
+
+            // --- Black Keys ---
+            for (let i = 0; i < numWhiteKeys; i++) {
+                const note = whiteKeys[i % 7];
+                const octave = startingOctave + Math.floor(i / 7);
+
+                if (blackKeyOffsets.includes(i % 7)) {
+                    const x = (i + 1) * keyWidth - keyWidth / 4;
+                    const grad = ctx.createLinearGradient(x, 0, x, blackKeyHeight);
+                    grad.addColorStop(0, "#333");
+                    grad.addColorStop(1, "#000");
+                    ctx.fillStyle = grad;
+                    ctx.strokeStyle = "#111";
+                    ctx.beginPath();
+                    ctx.roundRect(x - keyWidth / 4, 0, keyWidth / 2, blackKeyHeight, 3);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Black note name (C# / Db depending on setting)
+                    const semitone = (getSemitone(note, 'sharp') + 1) % 12;
+                    const blackNote = getNoteFromSemitone(semitone, currentNotation) + octave;
+
+                    // Highlight if active
+                    if (notes.includes(getNoteFromSemitone(semitone, currentNotation))) {
+                        ctx.fillStyle = `rgba(${themeColorRgb},0.6)`;
+                        ctx.fillRect(x - keyWidth / 4, 0, keyWidth / 2, blackKeyHeight);
+                    }
+
+                    // Label
+                    ctx.font = notes.includes(getNoteFromSemitone(semitone, currentNotation)) ? 'bold 11px Roboto' : '10px Roboto';
+                    ctx.fillStyle = notes.includes(getNoteFromSemitone(semitone, currentNotation)) ? themeColor : "#eee";
+                    ctx.textAlign = 'center';
+                    ctx.fillText(blackNote, x, blackKeyHeight - 10);
+                }
+            }
+        }
+
+        function updateTable() {
+            const key = document.getElementById('keySelect').value;
+            const mode = document.getElementById('modeSelect').value;
+            if (!modesData[key] || !modesData[key][mode]) return;
+            const data = modesData[key][mode];
+            const relativeModes = getRelativeModes(key, mode);
+            let relativeHtml = `You have selected <span>${key} ${mode}</span>`;
+            if (relativeModes.length > 0) {
+                relativeHtml += `, which is also the same note structure as: ${relativeModes.join(", ")}`;
+            } else {
+                relativeHtml += `, a non-diatonic scale.`;
+            }
+            document.getElementById('relativeModes').innerHTML = relativeHtml;
+            document.getElementById('fretboardKeyMode').innerHTML = `(${key} ${mode})`;
+            document.getElementById('pianoKeyMode').innerHTML = `(${key} ${mode})`;
+            let tableHtml = `
+                <tr><td>Notes</td><td>${data.notes.join(", ")}</td></tr>
+                <tr><td>Intervals</td><td>${data.intervals.join(", ")}</td></tr>
+                <tr><td>Emotion/Feeling</td><td>${modeEmotions[mode] || "N/A"}</td></tr>
+            `;
+            if (data.triads.length > 0) {
+                tableHtml += `<tr><td>Triads</td><td>${data.triads.join(", ")}</td></tr>`;
+            }
+            if (data.fourNote.length > 0) {
+                tableHtml += `<tr><td>Four-Note Chords</td><td>${data.fourNote.join(", ")}</td></tr>`;
+            }
+            if (data.fiveNote.length > 0) {
+                tableHtml += `<tr><td>Five-Note Chords</td><td>${data.fiveNote.join(", ")}</td></tr>`;
+            }
+            if (data.sixNote.length > 0) {
+                tableHtml += `<tr><td>Six-Note Chords</td><td>${data.sixNote.join(", ")}</td></tr>`;
+            }
+            document.getElementById('tableBody').innerHTML = tableHtml;
+            drawFretboard(data.notes);
+            drawPianoRoll(data.notes);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            currentNotation = 'sharp';
+            currentTuning = 'standard';
+            currentStringOrder = 'highBottom';
+            themeColor = '#00ffcc';
+            document.documentElement.style.setProperty('--theme-color', themeColor);
+            document.documentElement.style.setProperty('--theme-color-rgb', hexToRgb(themeColor));
+            modesData = generateData(currentNotation);
+            updateKeySelect();
+            document.getElementById('notationSelect').addEventListener('change', (e) => {
+                currentNotation = e.target.value;
+                modesData = generateData(currentNotation);
+                updateKeySelect();
+                updateTable();
+            });
+            document.getElementById('tuningSelect').addEventListener('change', (e) => {
+                currentTuning = e.target.value;
+                updateTable();
+            });
+            document.getElementById('stringOrderSelect').addEventListener('change', (e) => {
+                currentStringOrder = e.target.value;
+                updateTable();
+            });
+            document.getElementById('themeColor').addEventListener('input', (e) => {
+                themeColor = e.target.value;
+                document.documentElement.style.setProperty('--theme-color', themeColor);
+                document.documentElement.style.setProperty('--theme-color-rgb', hexToRgb(themeColor));
+                updateTable();
+            });
+            document.getElementById('keySelect').addEventListener('change', updateTable);
+            document.getElementById('modeSelect').addEventListener('change', updateTable);
+            updateTable();
+        });
+    </script>
+</body>
+</html>
