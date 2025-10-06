@@ -1,162 +1,234 @@
-# MIDI Music Theory Visualizer
+# 🎸 MIDI Music Theory Visualizer
 
-A merged web application that combines **MIDI visualization** from the FretFlow project with the **design layout and music theory features** from the musicTheory project. This application displays active tones on both a guitar fretboard and piano roll in real-time as MIDI files are played back.
+A web application that visualizes MIDI files in real-time on both a **guitar fretboard** and **piano roll**. This project merges MIDI visualization functionality from [FretFlow](https://github.com/kappter/FretFlow) with the design aesthetic of [musicTheory](https://github.com/kappter/musicTheory).
 
-## Features
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kappter.github.io/midi-visualizer/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 
-### Core Functionality
+---
 
-- **MIDI File Upload**: Upload your own MIDI files (.mid, .midi) for visualization
-- **Sample MIDI Files**: Three built-in sample patterns (C Major Scale, Blues Riff, Arpeggio Pattern)
-- **Real-time Visualization**: Watch notes light up on both fretboard and piano roll as they play
-- **Playback Controls**: Play, pause, and stop buttons with adjustable playback speed (0.5x to 2.0x)
+## ✨ Features
 
-### Guitar Fretboard Features
+### 🎵 MIDI Playback
+- **Upload MIDI files** or use built-in samples
+- **Playback controls**: Play, pause, stop
+- **Variable speed**: 0.5x to 2.0x playback speed
+- **Real-time visualization** of active notes
 
-- **Multiple Tunings**:
-  - Standard Tuning (E-A-D-G-B-E)
-  - Drop D Tuning (D-A-D-G-B-E)
-  - Open G Tuning (D-G-D-G-B-D)
-  - DADGAD Tuning (D-A-D-G-A-D)
-- **String Order Options**: Display with high string on bottom or low string on bottom
-- **Visual Fret Markers**: Dots at frets 3, 5, 7, 9, and double dots at fret 12
-- **Note Labels**: Active notes show their note names directly on the fretboard
-- **String Labels**: Each string is labeled with its open note name
+### 🎸 Guitar Fretboard
+- **Multiple tunings**: Standard, Drop D, Open G, DADGAD
+- **String order options**: High-to-low or low-to-high
+- **Visual fret markers** at positions 3, 5, 7, 9, 12
+- **Note labels** displayed on active frets
+- **12-fret range** with accurate note mapping
 
-### Piano Roll Features
+### 🎹 Piano Roll
+- **Two-octave keyboard** (C3 to B4)
+- **Realistic piano styling** with gradient shading
+- **Active note highlighting** with theme color
+- **Note labels** on all keys (white and black)
 
-- **Two-Octave Range**: Displays C3 to B4 (28 keys total)
-- **Realistic Piano Keys**: White and black keys with gradient shading
-- **Active Note Highlighting**: Keys light up with theme color when notes are played
-- **Note Labels**: Each key shows its note name and octave number
+### 🎨 Customization
+- **Sharp/Flat notation** toggle
+- **Custom theme colors** with color picker
+- **Responsive design** for desktop and mobile
+- **Dark theme** with glowing accents
+
+---
+
+## 🚀 Quick Start
+
+### Try It Online
+Visit the **[Live Demo](https://kappter.github.io/midi-visualizer/)** to use the application immediately.
+
+### Run Locally
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/kappter/midi-visualizer.git
+   cd midi-visualizer
+   ```
+
+2. Open `index.html` in your web browser:
+   ```bash
+   # On macOS
+   open index.html
+   
+   # On Linux
+   xdg-open index.html
+   
+   # On Windows
+   start index.html
+   ```
+
+That's it! No build process or dependencies required.
+
+---
+
+## 📖 Usage Guide
+
+### Loading MIDI Files
+
+**Option 1: Upload Your Own**
+1. Click the **"📁 Upload MIDI"** button
+2. Select a `.mid` or `.midi` file from your computer
+3. The file will be parsed and ready to play
+
+**Option 2: Use Built-in Samples**
+1. Click the **"Select Sample MIDI"** dropdown
+2. Choose from:
+   - C Major Scale
+   - Blues Riff
+   - Arpeggio Pattern
+
+### Playback Controls
+
+- **▶ Play**: Start playback from current position
+- **⏸ Pause**: Pause playback (resume with Play)
+- **⏹ Stop**: Stop and reset to beginning
+- **Speed Slider**: Adjust playback speed (0.5x - 2.0x)
 
 ### Customization Options
 
-- **Sharp/Flat Notation**: Toggle between sharp (♯) and flat (♭) note naming
-- **Theme Color Picker**: Customize the accent color throughout the interface
-- **Responsive Design**: Works on desktop and mobile devices
-- **Dark Theme**: Professional dark interface with cyan/teal default accent color
+**Notation**
+- Toggle between **Sharps** (C#, D#, F#...) and **Flats** (Db, Eb, Gb...)
 
-## Technical Details
+**Guitar Tuning**
+- **Standard**: E-A-D-G-B-E
+- **Drop D**: D-A-D-G-B-E
+- **Open G**: D-G-D-G-B-D
+- **DADGAD**: D-A-D-G-A-D
+
+**String Order**
+- **High String Bottom**: Traditional guitar tab orientation
+- **Low String Bottom**: Looking down at your own guitar
+
+**Theme Color**
+- Click the color picker to customize the accent color throughout the interface
+
+---
+
+## 🛠️ Technical Details
 
 ### Architecture
 
-The application is built as a **single-page application** using:
-- **Pure HTML/CSS/JavaScript** (no framework dependencies)
-- **MIDI Parser JS** library for MIDI file parsing
-- **HTML5 Canvas** for rendering fretboard and piano roll visualizations
+**Single-Page Application** built with:
+- Pure **HTML5** (semantic markup)
+- Vanilla **JavaScript** (ES6+)
+- Modern **CSS3** (gradients, transforms, animations)
+- **HTML5 Canvas** for rendering visualizations
+
+**External Dependencies**:
+- [midi-parser-js](https://github.com/colxi/midi-parser-js) (v4.0.4) - MIDI file parsing
 
 ### Key Components
 
-1. **MIDI Parser**: Parses MIDI files and extracts note events with timing information
-2. **Playback Engine**: Time-based playback system with speed control
-3. **Fretboard Renderer**: Draws guitar fretboard with strings, frets, and active notes
-4. **Piano Roll Renderer**: Draws piano keyboard with active note highlighting
-5. **Control Panel**: User interface for all settings and playback controls
+| Component | Purpose |
+|-----------|---------|
+| **MIDI Parser** | Parses MIDI files and extracts note events with timing |
+| **Playback Engine** | Time-based playback system with speed control |
+| **Fretboard Renderer** | Draws guitar fretboard with strings, frets, and active notes |
+| **Piano Roll Renderer** | Draws piano keyboard with active note highlighting |
+| **Control Panel** | User interface for settings and playback controls |
 
-### Design Philosophy
+### Browser Compatibility
 
-The application follows the **musicTheory project's design aesthetic**:
-- Dark gradient background (#1a1a1a to #2c2c2c)
-- Glowing theme color accents with box shadows
-- Smooth hover transitions and button interactions
-- Professional typography using Roboto font
-- Organized layout with labeled sections
-- Responsive controls that adapt to screen size
-
-### MIDI Visualization Logic
-
-The application uses a **time-based playback system**:
-1. MIDI files are parsed to extract note-on events with timestamps
-2. During playback, the current time is tracked
-3. Notes within a 100ms tolerance window are considered "active"
-4. Active notes are displayed on both fretboard and piano roll
-5. The MIDI info panel logs each note event as it occurs
-
-### Fretboard Mapping
-
-Notes are mapped to the fretboard using:
-- **String tuning values** (MIDI note numbers for open strings)
-- **Fret calculations** (each fret adds one semitone)
-- **Multiple positions** (same note can appear on different strings)
-- All matching positions are highlighted simultaneously
-
-## Usage Guide
-
-### Getting Started
-
-1. **Load MIDI Data**:
-   - Click "Upload MIDI" to load your own MIDI file, or
-   - Select a sample from the "Select Sample MIDI" dropdown
-
-2. **Configure Settings** (optional):
-   - Choose sharp or flat notation
-   - Select guitar tuning
-   - Choose string order preference
-   - Pick a custom theme color
-
-3. **Play and Visualize**:
-   - Click the "Play" button to start playback
-   - Watch notes light up on the fretboard and piano roll
-   - Adjust speed with the slider if needed
-   - Use pause/stop to control playback
-
-### Tips
-
-- **Speed Control**: Slow down playback (0.5x) to study note positions, or speed up (2.0x) for a quick overview
-- **Multiple Tunings**: Experiment with different tunings to see how the same notes map to different fret positions
-- **Theme Colors**: Choose colors that match your personal preference or brand
-- **MIDI Info Panel**: Scroll through the info panel to see a log of all note events
-
-## Browser Compatibility
-
-The application works in all modern browsers that support:
+Works in all modern browsers supporting:
 - HTML5 Canvas
 - ES6 JavaScript
 - CSS3 (gradients, transforms, transitions)
-- File API for MIDI upload
+- File API
 
-Tested on:
-- Chrome/Chromium 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+**Tested on**:
+- ✅ Chrome/Chromium 90+
+- ✅ Firefox 88+
+- ✅ Safari 14+
+- ✅ Edge 90+
 
-## Project Structure
+---
+
+## 📁 Project Structure
 
 ```
 midi-visualizer/
-├── index.html          # Main application file (all-in-one)
-└── README.md          # This file
+├── index.html              # Main application (all-in-one file)
+├── README.md              # This file
+├── LICENSE                # MIT License
+├── CONTRIBUTING.md        # Contribution guidelines
+├── _config.yml           # GitHub Pages configuration
+├── .gitignore            # Git ignore rules
+└── samples/              # Sample MIDI files directory
+    └── README.md         # Sample files documentation
 ```
 
-The entire application is contained in a **single HTML file** for easy deployment and portability. All CSS and JavaScript are embedded inline.
+---
 
-## Credits
+## 🎯 Use Cases
 
-This project merges concepts and code from:
+- **Music Education**: Visualize scales, chords, and melodies
+- **Guitar Learning**: See where notes are on the fretboard
+- **Music Theory**: Understand note relationships across instruments
+- **MIDI File Analysis**: Inspect MIDI file contents visually
+- **Practice Tool**: Slow down songs to learn note positions
+- **Composition Aid**: Visualize your MIDI compositions
 
-- **FretFlow** (https://github.com/kappter/FretFlow)
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**Ideas for contributions**:
+- 🔊 Audio playback with Web Audio API
+- 🎵 Chord detection and display
+- 🎼 Multi-track MIDI support
+- 📊 Scale highlighting modes
+- 🎥 Export as video/image
+- ♿ Accessibility improvements
+- 🎻 Additional instruments (bass, ukulele, violin)
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Credits
+
+This project merges concepts from:
+
+- **[FretFlow](https://github.com/kappter/FretFlow)** by kappter
   - MIDI parsing and playback logic
-  - Time-based note visualization approach
-  
-- **musicTheory** (https://github.com/kappter/musicTheory)
-  - Visual design and layout
-  - Dark theme with glowing accents
-  - Fretboard and piano roll rendering style
+  - Time-based visualization approach
 
-## License
+- **[musicTheory](https://github.com/kappter/musicTheory)** by kappter
+  - Visual design and dark theme
+  - Fretboard and piano roll styling
 
-This merged application inherits the licenses from both source projects. Please refer to the original repositories for specific licensing information.
+**External Libraries**:
+- [midi-parser-js](https://github.com/colxi/midi-parser-js) by colxi
 
-## Future Enhancements
+---
 
-Potential features for future development:
-- Audio playback (Web Audio API)
-- Multi-track MIDI support
-- Chord detection and display
-- Scale highlighting
-- Recording and export functionality
-- More instrument visualizations (bass, ukulele, etc.)
-- Animation effects for note transitions
-- Loop and section repeat controls
+## 📞 Support
+
+- 🐛 **Bug Reports**: [Open an issue](https://github.com/kappter/midi-visualizer/issues)
+- 💡 **Feature Requests**: [Open an issue](https://github.com/kappter/midi-visualizer/issues)
+- 💬 **Questions**: [Start a discussion](https://github.com/kappter/midi-visualizer/discussions)
+
+---
+
+## 🌟 Show Your Support
+
+If you find this project helpful, please consider:
+- ⭐ Starring the repository
+- 🍴 Forking and contributing
+- 📢 Sharing with others
+
+---
+
+**Made with ❤️ for music learners and MIDI enthusiasts**

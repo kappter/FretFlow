@@ -51,10 +51,12 @@
         
         .controls {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             margin-bottom: 20px;
             justify-content: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 5px 0;
         }
         
         select, input[type="color"], button, input[type="file"] {
@@ -67,6 +69,8 @@
             cursor: pointer;
             transition: background 0.3s ease, transform 0.1s ease;
             font-family: inherit;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         
         select:hover, button:hover {
@@ -75,6 +79,12 @@
         
         button:active {
             transform: scale(0.95);
+        }
+        
+        button.active {
+            background: var(--theme-color);
+            color: #1a1a1a;
+            font-weight: bold;
         }
         
         input[type="color"] {
@@ -266,9 +276,11 @@
         </div>
         
         <div class="playback-controls">
+            <button id="showAllBtn" disabled>👁️ Show All Notes</button>
             <button id="playBtn" disabled>▶ Play</button>
             <button id="pauseBtn" disabled>⏸ Pause</button>
             <button id="stopBtn" disabled>⏹ Stop</button>
+            <button id="loopBtn" disabled>🔁 Loop</button>
             <div class="speed-control">
                 <label>Speed:</label>
                 <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1" disabled>
@@ -311,6 +323,7 @@
         let playbackTimer = null;
         let playbackTime = 0;
         let isPlaying = false;
+        let isLooping = false;
         let currentTuning = tunings.standard;
         let currentNotation = 'sharp';
         let currentStringOrder = 'highBottom';
@@ -321,9 +334,11 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const fileInput = document.getElementById('fileInput');
         const sampleSelect = document.getElementById('sampleSelect');
+        const showAllBtn = document.getElementById('showAllBtn');
         const playBtn = document.getElementById('playBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const loopBtn = document.getElementById('loopBtn');
         const speedSlider = document.getElementById('speedSlider');
         const speedDisplay = document.getElementById('speedDisplay');
         const midiInfo = document.getElementById('midiInfo');
@@ -360,38 +375,77 @@
         }
         
         // MIDI Parsing
-        function parseMidi(data) {
+        function parseMidi(arrayBuffer) {
             try {
-                const midi = MidiParser.parse(data);
-                const notes = [];
-                let tempo = 500000; // Default tempo (microseconds per quarter note)
+                console.log('📥 Parsing MIDI file, size:', arrayBuffer.byteLength, 'bytes');
                 
-                midi.track.forEach(track => {
-                    let currentTime = 0;
+                // Convert ArrayBuffer to base64 for midi-parser-js
+                const bytes = new Uint8Array(arrayBuffer);
+                console.log('   First 4 bytes:', Array.from(bytes.slice(0, 4)).map(b => String.fromCharCode(b)).join(''));
+                
+                let binary = '';
+                const chunkSize = 0x8000; // Process in chunks to avoid call stack size exceeded
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+                    binary += String.fromCharCode.apply(null, chunk);
+                }
+                const base64 = btoa(binary);
+                
+                // Parse with midi-parser-js
+                const midi = MidiParser.parse(base64);
+                console.log('   MIDI parsed:', midi ? 'success' : 'failed');
+                
+                if (!midi || !midi.track) {
+                    console.error('❌ Invalid MIDI data - no tracks found');
+                    return [];
+                }
+                
+                console.log('   Format:', midi.formatType, '| Tracks:', midi.tracks, '| Time Division:', midi.timeDivision);
+                
+                const notes = [];
+                const ticksPerBeat = midi.timeDivision;
+                let tempo = 500000; // Default tempo (microseconds per quarter note = 120 BPM)
+                
+                midi.track.forEach((track, trackIndex) => {
+                    let currentTick = 0;
+                    let trackNotes = 0;
+                    
                     track.event.forEach(event => {
-                        currentTime += event.deltaTime;
+                        currentTick += event.deltaTime;
                         
-                        // Check for tempo changes
-                        if (event.type === 255 && event.metaType === 81) {
+                        // Check for tempo changes (meta event type 81)
+                        if (event.type === 255 && event.metaType === 81 && event.data) {
                             tempo = (event.data[0] << 16) | (event.data[1] << 8) | event.data[2];
+                            console.log('   Tempo change:', (60000000 / tempo).toFixed(1), 'BPM');
                         }
                         
-                        // Note On events
-                        if (event.type === 9 && event.data && event.data[1] > 0) {
+                        // Note On events (type 9 with velocity > 0)
+                        if (event.type === 9 && event.data && event.data.length >= 2 && event.data[1] > 0) {
                             const noteNumber = event.data[0];
-                            const timeInSeconds = (currentTime / midi.timeDivision) * (tempo / 1000000);
+                            const timeInSeconds = (currentTick / ticksPerBeat) * (tempo / 1000000);
                             notes.push({
                                 name: noteToName(noteNumber, currentNotation),
                                 number: noteNumber,
                                 time: timeInSeconds
                             });
+                            trackNotes++;
                         }
                     });
+                    
+                    console.log(`   Track ${trackIndex}: ${trackNotes} notes`);
                 });
                 
-                return notes.sort((a, b) => a.time - b.time);
+                const sorted = notes.sort((a, b) => a.time - b.time);
+                console.log('✅ Total notes extracted:', sorted.length);
+                if (sorted.length > 0) {
+                    console.log('   First note:', sorted[0].name, 'at', sorted[0].time.toFixed(2), 's');
+                    console.log('   Last note:', sorted[sorted.length-1].name, 'at', sorted[sorted.length-1].time.toFixed(2), 's');
+                    console.log('   Note range:', Math.min(...sorted.map(n => n.number)), '-', Math.max(...sorted.map(n => n.number)));
+                }
+                
+                return sorted;
             } catch (error) {
-                console.error('MIDI parsing error:', error);
+                console.error('❌ MIDI parsing error:', error);
                 return [];
             }
         }
@@ -661,7 +715,14 @@
                 
                 // Check if playback finished
                 if (playbackTime > midiNotes[midiNotes.length - 1].time + 1) {
-                    stopPlayback();
+                    if (isLooping) {
+                        // Restart from beginning
+                        playbackTime = 0;
+                        midiInfo.innerHTML = '';
+                        console.log('🔁 Looping playback');
+                    } else {
+                        stopPlayback();
+                    }
                 }
             }, 50); // 20fps for smooth playback
         }
@@ -690,6 +751,37 @@
             drawPianoRoll();
         }
         
+        function showAllNotes() {
+            if (midiNotes.length === 0) return;
+            
+            console.log('🎵 Showing all', midiNotes.length, 'notes on fretboard');
+            
+            // Stop any playback
+            if (isPlaying) {
+                stopPlayback();
+            }
+            
+            // Add all unique notes to activeNotes
+            activeNotes.clear();
+            const uniqueNotes = new Set(midiNotes.map(n => n.number));
+            uniqueNotes.forEach(n => activeNotes.add(n));
+            
+            console.log('   Unique notes:', uniqueNotes.size);
+            console.log('   Note range:', Math.min(...uniqueNotes), '-', Math.max(...uniqueNotes));
+            
+            // Update info display
+            midiInfo.innerHTML = `<span style="color: ${themeColor}">Displaying all ${uniqueNotes.size} unique notes from MIDI file</span><br>`;
+            const noteList = Array.from(uniqueNotes).sort((a, b) => a - b).map(n => noteToName(n, currentNotation)).join(', ');
+            midiInfo.innerHTML += `Notes: ${noteList}`;
+            
+            // Draw visualizations
+            drawFretboard();
+            drawPianoRoll();
+            
+            statusMessage.textContent = `Showing all ${uniqueNotes.size} unique notes`;
+            statusMessage.style.color = themeColor;
+        }
+        
         // Event Handlers
         uploadBtn.addEventListener('click', () => {
             fileInput.click();
@@ -699,29 +791,31 @@
             const file = e.target.files[0];
             if (!file) return;
             
+            statusMessage.textContent = 'Loading MIDI file...';
+            statusMessage.style.color = themeColor;
+            
             const reader = new FileReader();
             reader.onload = (e) => {
-                // Convert ArrayBuffer to base64 string for midi-parser-js
                 const arrayBuffer = e.target.result;
-                const bytes = new Uint8Array(arrayBuffer);
-                let binary = '';
-                for (let i = 0; i < bytes.byteLength; i++) {
-                    binary += String.fromCharCode(bytes[i]);
-                }
-                const base64 = btoa(binary);
                 
-                midiNotes = parseMidi(base64);
+                midiNotes = parseMidi(arrayBuffer);
                 
                 if (midiNotes.length > 0) {
                     statusMessage.textContent = `Loaded: ${file.name} (${midiNotes.length} notes)`;
                     statusMessage.style.color = themeColor;
+                    showAllBtn.disabled = false;
                     playBtn.disabled = false;
+                    loopBtn.disabled = false;
                     speedSlider.disabled = false;
                     sampleSelect.value = '';
                 } else {
                     statusMessage.textContent = 'Error: Could not parse MIDI file';
                     statusMessage.style.color = '#ff6b6b';
                 }
+            };
+            reader.onerror = () => {
+                statusMessage.textContent = 'Error loading MIDI file';
+                statusMessage.style.color = '#ff6b6b';
             };
             reader.readAsArrayBuffer(file);
         });
@@ -732,13 +826,31 @@
             midiNotes = generateSampleMidi(e.target.value);
             statusMessage.textContent = `Loaded sample: ${e.target.options[e.target.selectedIndex].text}`;
             statusMessage.style.color = themeColor;
+            showAllBtn.disabled = false;
             playBtn.disabled = false;
+            loopBtn.disabled = false;
             speedSlider.disabled = false;
         });
         
+        showAllBtn.addEventListener('click', showAllNotes);
         playBtn.addEventListener('click', startPlayback);
         pauseBtn.addEventListener('click', pausePlayback);
         stopBtn.addEventListener('click', stopPlayback);
+        
+        loopBtn.addEventListener('click', () => {
+            isLooping = !isLooping;
+            if (isLooping) {
+                loopBtn.classList.add('active');
+                console.log('🔁 Loop enabled');
+                statusMessage.textContent = 'Loop enabled';
+                statusMessage.style.color = themeColor;
+            } else {
+                loopBtn.classList.remove('active');
+                console.log('🔁 Loop disabled');
+                statusMessage.textContent = 'Loop disabled';
+                statusMessage.style.color = themeColor;
+            }
+        });
         
         speedSlider.addEventListener('input', (e) => {
             const speed = parseFloat(e.target.value);
