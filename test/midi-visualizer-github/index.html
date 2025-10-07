@@ -284,6 +284,8 @@
             <button id="pauseBtn" disabled>⏸ Pause</button>
             <button id="stopBtn" disabled>⏹ Stop</button>
             <button id="loopBtn" disabled>🔁 Loop</button>
+            <button id="stepBackBtn" disabled>⏮️ Step Back</button>
+            <button id="stepForwardBtn" disabled>⏭️ Step Forward</button>
             <div class="speed-control">
                 <label>Speed:</label>
                 <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1" disabled>
@@ -327,6 +329,7 @@
         let playbackTime = 0;
         let isPlaying = false;
         let isLooping = false;
+        let currentStepIndex = 0; // For step-through mode
         let currentTuning = tunings.standard;
         let currentNotation = 'sharp';
         let currentStringOrder = 'highBottom';
@@ -344,6 +347,8 @@
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
         const loopBtn = document.getElementById('loopBtn');
+        const stepBackBtn = document.getElementById('stepBackBtn');
+        const stepForwardBtn = document.getElementById('stepForwardBtn');
         const speedSlider = document.getElementById('speedSlider');
         const speedDisplay = document.getElementById('speedDisplay');
         const midiInfo = document.getElementById('midiInfo');
@@ -797,6 +802,7 @@
             clearInterval(playbackTimer);
             isPlaying = false;
             playbackTime = 0;
+            currentStepIndex = 0;
             activeNotes.clear();
             
             playBtn.disabled = false;
@@ -806,6 +812,66 @@
             midiInfo.innerHTML = '';
             drawFretboard();
             drawPianoRoll();
+        }
+        
+        function stepForward() {
+            if (midiNotes.length === 0) return;
+            
+            // Stop any playback
+            if (isPlaying) {
+                pausePlayback();
+            }
+            
+            // Move to next note
+            if (currentStepIndex < midiNotes.length - 1) {
+                currentStepIndex++;
+            } else if (isLooping) {
+                currentStepIndex = 0;
+            }
+            
+            showStepNote();
+        }
+        
+        function stepBackward() {
+            if (midiNotes.length === 0) return;
+            
+            // Stop any playback
+            if (isPlaying) {
+                pausePlayback();
+            }
+            
+            // Move to previous note
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+            } else if (isLooping) {
+                currentStepIndex = midiNotes.length - 1;
+            }
+            
+            showStepNote();
+        }
+        
+        function showStepNote() {
+            const note = midiNotes[currentStepIndex];
+            
+            // Clear and show only current note
+            activeNotes.clear();
+            noteIntensity = {}; // Clear heat map
+            activeNotes.add(note.number);
+            
+            // Update info display
+            midiInfo.innerHTML = `
+                <span style="color: ${themeColor}">🎵 Step Mode</span><br>
+                <strong>Note ${currentStepIndex + 1} of ${midiNotes.length}</strong><br>
+                Note: ${note.name} (MIDI ${note.number})<br>
+                Time: ${note.time.toFixed(2)}s<br>
+                <small>Use Step Forward/Back to analyze each position</small>
+            `;
+            
+            // Update visualizations
+            drawFretboard();
+            drawPianoRoll();
+            
+            console.log(`🎵 Step ${currentStepIndex + 1}/${midiNotes.length}: ${note.name} at ${note.time.toFixed(2)}s`);
         }
         
         // MIDI Analysis Functions
@@ -969,8 +1035,11 @@
                     showAllBtn.disabled = false;
                     playBtn.disabled = false;
                     loopBtn.disabled = false;
+                    stepBackBtn.disabled = false;
+                    stepForwardBtn.disabled = false;
                     speedSlider.disabled = false;
                     sampleSelect.value = '';
+                    currentStepIndex = 0;
                     
                     // Show heat map immediately
                     showHeatMap();
@@ -995,13 +1064,18 @@
             showAllBtn.disabled = false;
             playBtn.disabled = false;
             loopBtn.disabled = false;
+            stepBackBtn.disabled = false;
+            stepForwardBtn.disabled = false;
             speedSlider.disabled = false;
+            currentStepIndex = 0;
         });
         
         showAllBtn.addEventListener('click', showAllNotes);
         playBtn.addEventListener('click', startPlayback);
         pauseBtn.addEventListener('click', pausePlayback);
         stopBtn.addEventListener('click', stopPlayback);
+        stepBackBtn.addEventListener('click', stepBackward);
+        stepForwardBtn.addEventListener('click', stepForward);
         
         loopBtn.addEventListener('click', () => {
             isLooping = !isLooping;
