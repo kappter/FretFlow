@@ -269,7 +269,13 @@
                 <option value="highBottom">High String Bottom</option>
                 <option value="lowBottom">Low String Bottom</option>
             </select>
+            <select id="fretViewSelect">
+                <option value="all">All Frets (0-12)</option>
+                <option value="above6">Above Fret 6 (7-12)</option>
+                <option value="range6-13">Frets 6-13</option>
+            </select>
             <input type="color" id="themeColor" value="#00ffcc" title="Theme Color">
+            <button onclick="window.open('theory-reference.html', '_blank')">📚 Theory Reference</button>
         </div>
         
         <div class="playback-controls">
@@ -324,6 +330,7 @@
         let currentTuning = tunings.standard;
         let currentNotation = 'sharp';
         let currentStringOrder = 'highBottom';
+        let currentFretView = 'all'; // Fret view mode
         let themeColor = '#00ffcc';
         let activeNotes = new Set();
         let noteIntensity = {}; // For heat map coloring
@@ -346,6 +353,7 @@
         const notationSelect = document.getElementById('notationSelect');
         const tuningSelect = document.getElementById('tuningSelect');
         const stringOrderSelect = document.getElementById('stringOrderSelect');
+        const fretViewSelect = document.getElementById('fretViewSelect');
         const themeColorInput = document.getElementById('themeColor');
         
         // Utility Functions
@@ -548,13 +556,13 @@
                 }
             });
             
-            // Draw fret numbers
-            ctx.fillStyle = themeColor;
-            ctx.font = '11px Roboto';
+            // Draw fret numbers (above fretboard)
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Roboto';
             ctx.textAlign = 'center';
             for (let f = 0; f <= numFrets; f++) {
                 const x = startX + f * fretSpacing;
-                ctx.fillText(f.toString(), x, startY + numStrings * stringSpacing + 10);
+                ctx.fillText(f.toString(), x, startY - 8);
             }
             
             // Draw string labels
@@ -567,13 +575,23 @@
                 ctx.fillText(noteName, startX - 10, y);
             });
             
-            // Draw active notes with heat map coloring
+            // Draw active notes with heat map coloring and fret view filtering
             ctx.strokeStyle = '#1a1a1a';
             ctx.lineWidth = 2;
             activeNotes.forEach(noteNumber => {
                 stringOrder.forEach((stringNote, stringIndex) => {
                     for (let fret = 0; fret <= numFrets; fret++) {
                         if (stringNote + fret === noteNumber) {
+                            // Apply fret view filter
+                            let showNote = true;
+                            if (currentFretView === 'above6' && fret <= 6) {
+                                showNote = false;
+                            } else if (currentFretView === 'range6-13' && (fret < 6 || fret > 13)) {
+                                showNote = false;
+                            }
+                            
+                            if (!showNote) continue;
+                            
                             const x = startX + fret * fretSpacing;
                             const y = startY + stringIndex * stringSpacing;
                             
@@ -1027,6 +1045,12 @@
         
         stringOrderSelect.addEventListener('change', (e) => {
             currentStringOrder = e.target.value;
+            drawFretboard();
+        });
+        
+        fretViewSelect.addEventListener('change', (e) => {
+            currentFretView = e.target.value;
+            console.log('🎸 Fret view changed to:', currentFretView);
             drawFretboard();
         });
         
