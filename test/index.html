@@ -810,6 +810,8 @@
         }
         
         // Playback Functions
+        let lastPlayedNotes = new Set(); // Track which notes were played in the last frame
+        
         function startPlayback() {
             if (isPlaying || midiNotes.length === 0) return;
             
@@ -817,6 +819,7 @@
             playBtn.disabled = true;
             pauseBtn.disabled = false;
             stopBtn.disabled = false;
+            lastPlayedNotes.clear(); // Reset tracking
             
             const speed = parseFloat(speedSlider.value);
             const startTime = Date.now();
@@ -834,16 +837,25 @@
                     Math.abs(note.time - playbackTime) < 0.1
                 );
                 
+                // Track which notes are new in this frame
+                const newNotes = new Set();
+                
                 currentNotes.forEach(note => {
                     activeNotes.add(note.number);
                     
-                    // Play audio for this note
-                    playNote(note.number, 0.3);
-                    
-                    const info = `<span style="color: ${themeColor}">♪</span> Note: ${note.name} (${note.number}) at ${playbackTime.toFixed(2)}s<br>`;
-                    midiInfo.innerHTML += info;
-                    midiInfo.scrollTop = midiInfo.scrollHeight;
+                    // Only play audio if this is a new note (not played in previous frame)
+                    if (!lastPlayedNotes.has(note.number)) {
+                        playNote(note.number, 0.3);
+                        newNotes.add(note.number);
+                        
+                        const info = `<span style="color: ${themeColor}">♪</span> Note: ${note.name} (${note.number}) at ${playbackTime.toFixed(2)}s<br>`;
+                        midiInfo.innerHTML += info;
+                        midiInfo.scrollTop = midiInfo.scrollHeight;
+                    }
                 });
+                
+                // Update the set of played notes for next frame
+                lastPlayedNotes = new Set(activeNotes);
                 
                 // Update visualizations
                 if (currentNotes.length > 0) {
@@ -886,6 +898,7 @@
             playbackTime = 0;
             currentStepIndex = 0;
             activeNotes.clear();
+            lastPlayedNotes.clear(); // Reset audio tracking
             
             playBtn.disabled = false;
             pauseBtn.disabled = true;
