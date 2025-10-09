@@ -273,6 +273,11 @@
                 <option value="all">All Frets (0-12)</option>
                 <option value="above6">Above Fret 6 (7-12)</option>
                 <option value="range6-13">Frets 6-13</option>
+                <option value="0-6">Frets 0-6 Only</option>
+            </select>
+            <select id="duplicateFilterSelect">
+                <option value="all">Show All Positions</option>
+                <option value="unique">Show Unique Only</option>
             </select>
             <input type="color" id="themeColor" value="#00ffcc" title="Theme Color">
             <button onclick="window.open('theory-reference.html', '_blank')">📚 Theory Reference</button>
@@ -288,7 +293,7 @@
             <button id="stepForwardBtn" disabled>⏭️ Step Forward</button>
             <div class="speed-control">
                 <label>Speed:</label>
-                <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1" disabled>
+                <input type="range" id="speedSlider" min="0.1" max="2" step="0.1" value="1" disabled>
                 <span id="speedDisplay">1.0x</span>
             </div>
         </div>
@@ -302,7 +307,7 @@
         <div class="canvas-container">
             <div class="canvas-wrapper">
                 <div class="canvas-label" id="fretboardLabel">Guitar Fretboard</div>
-                <canvas id="fretboardCanvas" width="800" height="400"></canvas>
+                <canvas id="fretboardCanvas" width="800" height="300"></canvas>
             </div>
             <div class="canvas-wrapper">
                 <div class="canvas-label">Piano Roll</div>
@@ -334,9 +339,14 @@
         let currentNotation = 'sharp';
         let currentStringOrder = 'highBottom';
         let currentFretView = 'all'; // Fret view mode
+        let currentDuplicateFilter = 'all'; // Duplicate filter mode
         let themeColor = '#00ffcc';
         let activeNotes = new Set();
         let noteIntensity = {}; // For heat map coloring
+        
+        // Audio context for playback
+        let audioContext = null;
+        let audioEnabled = true;
         
         // DOM Elements
         const uploadBtn = document.getElementById('uploadBtn');
@@ -360,6 +370,7 @@
         const tuningSelect = document.getElementById('tuningSelect');
         const stringOrderSelect = document.getElementById('stringOrderSelect');
         const fretViewSelect = document.getElementById('fretViewSelect');
+        const duplicateFilterSelect = document.getElementById('duplicateFilterSelect');
         const themeColorInput = document.getElementById('themeColor');
         
         // Utility Functions
@@ -384,6 +395,46 @@
             document.documentElement.style.setProperty('--theme-color-rgb', rgb);
             drawFretboard();
             drawPianoRoll();
+        }
+        
+        // Audio Functions
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('🔊 Audio context initialized');
+            }
+        }
+        
+        function midiNoteToFrequency(midiNote) {
+            // Convert MIDI note number to frequency in Hz
+            // A4 (MIDI 69) = 440 Hz
+            return 440 * Math.pow(2, (midiNote - 69) / 12);
+        }
+        
+        function playNote(noteNumber, duration = 0.2) {
+            if (!audioEnabled || !audioContext) return;
+            
+            try {
+                const frequency = midiNoteToFrequency(noteNumber);
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine'; // Smooth sine wave tone
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                
+                // Envelope for natural sound
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01); // Attack
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration); // Decay
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (error) {
+                console.warn('Audio playback error:', error);
+            }
         }
         
         // MIDI Parsing
@@ -511,10 +562,10 @@
             
             const numStrings = 6;
             const numFrets = 12;
-            const stringSpacing = 50;
+            const stringSpacing = 35;
             const fretSpacing = 55;
             const startX = 80;
-            const startY = 50;
+            const startY = 60;
             
             const stringOrder = currentStringOrder === 'lowBottom' 
                 ? [...currentTuning].reverse() 
@@ -553,13 +604,15 @@
                 ctx.fill();
             });
             
-            // Draw fret numbers (above fretboard)
+            // Draw fret numbers (above and below fretboard)
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 12px Roboto';
             ctx.textAlign = 'center';
+            const fretboardBottom = startY + (numStrings - 1) * stringSpacing;
             for (let f = 0; f <= numFrets; f++) {
                 const x = startX + f * fretSpacing;
                 ctx.fillText(f.toString(), x, startY - 8);
+                ctx.fillText(f.toString(), x, fretboardBottom + 20);
             }
             
             // Draw string labels
@@ -572,10 +625,17 @@
                 ctx.fillText(noteName, startX - 10, y);
             });
             
-            // Draw active notes with heat map coloring and fret view filtering
+            // Draw active notes with heat map coloring, fret view filtering, and duplicate filtering
             ctx.strokeStyle = '#1a1a1a';
             ctx.lineWidth = 2;
+            
+            // If duplicate filtering is enabled, find the best position for each note
+            const notesToDraw = new Map(); // noteNumber -> {string, fret, x, y}
+            
             activeNotes.forEach(noteNumber => {
+                const positions = [];
+                
+                // Find all possible positions for this note
                 stringOrder.forEach((stringNote, stringIndex) => {
                     for (let fret = 0; fret <= numFrets; fret++) {
                         if (stringNote + fret === noteNumber) {
@@ -585,40 +645,66 @@
                                 showNote = false;
                             } else if (currentFretView === 'range6-13' && (fret < 6 || fret > 13)) {
                                 showNote = false;
+                            } else if (currentFretView === '0-6' && fret > 6) {
+                                showNote = false;
                             }
                             
                             if (!showNote) continue;
                             
-                            const x = startX + fret * fretSpacing;
-                            const y = startY + stringIndex * stringSpacing;
-                            
-                            // Heat map coloring based on intensity
-                            const intensity = noteIntensity[noteNumber] || 1;
-                            if (intensity < 1) {
-                                // Heat map mode - color by frequency
-                                const hue = 120 - (intensity * 120); // Green (120) to Red (0)
-                                const saturation = 70 + (intensity * 30); // 70-100%
-                                const lightness = 40 + (intensity * 20); // 40-60%
-                                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                            } else {
-                                // Normal mode - use theme color
-                                ctx.fillStyle = themeColor;
-                            }
-                            
-                            ctx.beginPath();
-                            ctx.arc(x, y, 12, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.stroke();
-                            
-                            // Draw note name
-                            ctx.fillStyle = '#000';
-                            ctx.font = 'bold 10px Arial';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            const noteName = noteToName(noteNumber, currentNotation).replace(/\d/, '');
-                            ctx.fillText(noteName, x, y + 1);
+                            positions.push({
+                                stringIndex,
+                                fret,
+                                x: startX + fret * fretSpacing,
+                                y: startY + stringIndex * stringSpacing
+                            });
                         }
                     }
+                });
+                
+                // Choose which positions to draw based on duplicate filter setting
+                if (currentDuplicateFilter === 'unique' && positions.length > 0) {
+                    // Show only the lowest fret position (most practical for open positions)
+                    const bestPosition = positions.reduce((best, current) => 
+                        current.fret < best.fret ? current : best
+                    );
+                    notesToDraw.set(noteNumber, [bestPosition]);
+                } else {
+                    // Show all positions
+                    notesToDraw.set(noteNumber, positions);
+                }
+            });
+            
+            // Draw the selected positions
+            notesToDraw.forEach((positions, noteNumber) => {
+                positions.forEach(pos => {
+                    const x = pos.x;
+                    const y = pos.y;
+                    
+                    // Heat map coloring based on intensity
+                    const intensity = noteIntensity[noteNumber] || 1;
+                    if (intensity < 1) {
+                        // Heat map mode - color by frequency
+                        const hue = 120 - (intensity * 120); // Green (120) to Red (0)
+                        const saturation = 70 + (intensity * 30); // 70-100%
+                        const lightness = 40 + (intensity * 20); // 40-60%
+                        ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    } else {
+                        // Normal mode - use theme color
+                        ctx.fillStyle = themeColor;
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Draw note name
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const noteName = noteToName(noteNumber, currentNotation).replace(/\d/, '');
+                    ctx.fillText(noteName, x, y + 1);
                 });
             });
         }
@@ -750,6 +836,10 @@
                 
                 currentNotes.forEach(note => {
                     activeNotes.add(note.number);
+                    
+                    // Play audio for this note
+                    playNote(note.number, 0.3);
+                    
                     const info = `<span style="color: ${themeColor}">♪</span> Note: ${note.name} (${note.number}) at ${playbackTime.toFixed(2)}s<br>`;
                     midiInfo.innerHTML += info;
                     midiInfo.scrollTop = midiInfo.scrollHeight;
@@ -849,6 +939,9 @@
             activeNotes.clear();
             noteIntensity = {}; // Clear heat map
             activeNotes.add(note.number);
+            
+            // Play audio for this note
+            playNote(note.number, 0.5);
             
             // Update info display
             midiInfo.innerHTML = `
@@ -1123,9 +1216,28 @@
             drawFretboard();
         });
         
+        duplicateFilterSelect.addEventListener('change', (e) => {
+            currentDuplicateFilter = e.target.value;
+            console.log('🎸 Duplicate filter changed to:', currentDuplicateFilter);
+            drawFretboard();
+        });
+        
         themeColorInput.addEventListener('input', (e) => {
             updateThemeColor(e.target.value);
         });
+        
+        // Initialize audio context on first user interaction (required by browsers)
+        playBtn.addEventListener('click', () => {
+            initAudioContext();
+        }, { once: true });
+        
+        stepForwardBtn.addEventListener('click', () => {
+            initAudioContext();
+        }, { once: true });
+        
+        stepBackBtn.addEventListener('click', () => {
+            initAudioContext();
+        }, { once: true });
         
         // Initialize
         drawFretboard();

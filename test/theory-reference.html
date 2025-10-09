@@ -268,9 +268,9 @@
 
             const numFrets = 12;
             const startX = 80;
-            const startY = 50;
+            const startY = 60;
             const fretSpacing = 55;
-            const stringSpacing = 50;
+            const stringSpacing = 35;
 
             const stringOrder = currentStringOrder === 'high-bottom' 
                 ? [...currentTuning].reverse() 
@@ -311,9 +311,11 @@
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
+            const fretboardBottom = startY + 5 * stringSpacing;
             for (let f = 0; f <= numFrets; f++) {
                 const x = startX + f * fretSpacing;
                 ctx.fillText(f.toString(), x, startY - 8);
+                ctx.fillText(f.toString(), x, fretboardBottom + 20);
             }
             
             // String labels
