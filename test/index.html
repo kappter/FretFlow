@@ -254,16 +254,20 @@
                 <option value="cmajor">C Major Scale</option>
                 <option value="blues">Blues Riff</option>
                 <option value="arpeggio">Arpeggio Pattern</option>
+                <option value="toccata">Toccata and Fugue in D Minor</option>
+                <option value="bumblebee">Flight of the Bumblebee</option>
             </select>
             <select id="notationSelect">
                 <option value="sharp">Sharps</option>
                 <option value="flat">Flats</option>
             </select>
             <select id="tuningSelect">
-                <option value="standard">Standard Tuning</option>
-                <option value="dropd">Drop D Tuning</option>
-                <option value="openg">Open G Tuning</option>
-                <option value="dadgad">DADGAD Tuning</option>
+                <option value="standard">Guitar: Standard Tuning</option>
+                <option value="dropd">Guitar: Drop D Tuning</option>
+                <option value="openg">Guitar: Open G Tuning</option>
+                <option value="dadgad">Guitar: DADGAD Tuning</option>
+                <option value="ukulele">Ukulele: Standard (High G)</option>
+                <option value="ukuleleLowG">Ukulele: Low G Tuning</option>
             </select>
             <select id="stringOrderSelect">
                 <option value="highBottom">High String Bottom</option>
@@ -274,6 +278,7 @@
                 <option value="above6">Above Fret 6 (7-12)</option>
                 <option value="range6-13">Frets 6-13</option>
                 <option value="0-6">Frets 0-6 Only</option>
+                <option value="extended">Extended (0-23 Frets)</option>
             </select>
             <select id="duplicateFilterSelect">
                 <option value="all">Show All Positions</option>
@@ -319,10 +324,12 @@
     <script>
         // Configuration
         const tunings = {
-            standard: [40, 45, 50, 55, 59, 64], // E2 A2 D3 G3 B3 E4
-            dropd: [38, 45, 50, 55, 59, 64],    // D2 A2 D3 G3 B3 E4
-            openg: [38, 43, 50, 55, 59, 62],    // D2 G2 D3 G3 B3 D4
-            dadgad: [38, 45, 50, 55, 57, 62]    // D2 A2 D3 G3 A3 D4
+            standard: [40, 45, 50, 55, 59, 64], // E2 A2 D3 G3 B3 E4 (Guitar)
+            dropd: [38, 45, 50, 55, 59, 64],    // D2 A2 D3 G3 B3 E4 (Guitar)
+            openg: [38, 43, 50, 55, 59, 62],    // D2 G2 D3 G3 B3 D4 (Guitar)
+            dadgad: [38, 45, 50, 55, 57, 62],   // D2 A2 D3 G3 A3 D4 (Guitar)
+            ukulele: [67, 60, 64, 69],          // G4 C4 E4 A4 (Ukulele High G)
+            ukuleleLowG: [55, 60, 64, 69]       // G3 C4 E4 A4 (Ukulele Low G)
         };
         
         const sharpNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -560,12 +567,30 @@
             const ctx = fretboardCanvas.getContext('2d');
             ctx.clearRect(0, 0, fretboardCanvas.width, fretboardCanvas.height);
             
-            const numStrings = 6;
-            const numFrets = 12;
-            const stringSpacing = 35;
-            const fretSpacing = 55;
+            // Detect if current tuning is ukulele (4 strings) or guitar (6 strings)
+            const isUkulele = currentTuning.length === 4;
+            const numStrings = isUkulele ? 4 : 6;
+            
+            // Determine number of frets based on view mode
+            const numFrets = currentFretView === 'extended' ? 23 : 12;
+            const stringSpacing = isUkulele ? 40 : 35; // Slightly wider spacing for ukulele
+            const fretSpacing = currentFretView === 'extended' ? 35 : 55; // Narrower spacing for extended view
             const startX = 80;
-            const startY = 60;
+            const startY = isUkulele ? 80 : 60; // Center ukulele vertically
+            
+            // Adjust canvas width for extended view
+            if (currentFretView === 'extended') {
+                fretboardCanvas.width = 900;
+            } else {
+                fretboardCanvas.width = 800;
+            }
+            
+            // Adjust canvas height for ukulele
+            if (isUkulele) {
+                fretboardCanvas.height = 300;
+            } else {
+                fretboardCanvas.height = 350;
+            }
             
             const stringOrder = currentStringOrder === 'lowBottom' 
                 ? [...currentTuning].reverse() 
@@ -594,15 +619,35 @@
             }
             
             // Draw fret markers
-            const markers = [3, 5, 7, 9, 12];
+            const markers = currentFretView === 'extended' 
+                ? [3, 5, 7, 9, 12, 15, 17, 19, 21] 
+                : [3, 5, 7, 9, 12];
+            const markerSize = currentFretView === 'extended' ? 6 : 8;
             ctx.fillStyle = '#888';
             markers.forEach(fret => {
                 const x = startX + (fret - 0.5) * fretSpacing;
                 const y = startY + 2.5 * stringSpacing;
                 ctx.beginPath();
-                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.arc(x, y, markerSize, 0, Math.PI * 2);
                 ctx.fill();
             });
+            
+            // Draw double dots for 12th and 24th fret in extended view
+            if (currentFretView === 'extended') {
+                [12, 24].forEach(fret => {
+                    if (fret <= numFrets) {
+                        const x = startX + (fret - 0.5) * fretSpacing;
+                        const y1 = startY + 1.5 * stringSpacing;
+                        const y2 = startY + 3.5 * stringSpacing;
+                        ctx.beginPath();
+                        ctx.arc(x, y1, markerSize, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(x, y2, markerSize, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
             
             // Draw fret numbers (above and below fretboard)
             ctx.fillStyle = '#fff';
@@ -715,10 +760,10 @@
             
             const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
             const blackKeyOffsets = [0, 1, 3, 4, 5]; // Positions where black keys exist
-            const numWhiteKeys = 14; // 2 octaves
+            const numWhiteKeys = 21; // 3 octaves (C2-B4)
             const keyWidth = pianoCanvas.width / numWhiteKeys;
             const blackKeyHeight = pianoCanvas.height * 0.6;
-            const startingOctave = 3;
+            const startingOctave = 2; // Starting from C2 for 3-octave range (C2-B4)
             
             const themeColorRgb = hexToRgb(themeColor);
             
@@ -1156,19 +1201,66 @@
             reader.readAsArrayBuffer(file);
         });
         
-        sampleSelect.addEventListener('change', (e) => {
+        sampleSelect.addEventListener('change', async (e) => {
             if (!e.target.value) return;
             
-            midiNotes = generateSampleMidi(e.target.value);
-            statusMessage.textContent = `Loaded sample: ${e.target.options[e.target.selectedIndex].text}`;
-            statusMessage.style.color = themeColor;
-            showAllBtn.disabled = false;
-            playBtn.disabled = false;
-            loopBtn.disabled = false;
-            stepBackBtn.disabled = false;
-            stepForwardBtn.disabled = false;
-            speedSlider.disabled = false;
-            currentStepIndex = 0;
+            const sampleType = e.target.value;
+            const sampleName = e.target.options[e.target.selectedIndex].text;
+            
+            // Check if this is a file-based sample or generated sample
+            if (sampleType === 'toccata' || sampleType === 'bumblebee') {
+                const filename = sampleType === 'toccata' 
+                    ? 'toccata_and_fugue_in_d_minor.mid' 
+                    : 'flight_of_the_bumblebee.mid';
+                
+                statusMessage.textContent = `Loading ${sampleName}...`;
+                statusMessage.style.color = themeColor;
+                
+                try {
+                    const response = await fetch(filename);
+                    const arrayBuffer = await response.arrayBuffer();
+                    
+                    midiNotes = parseMidi(arrayBuffer);
+                    
+                    if (midiNotes.length > 0) {
+                        const analysis = analyzeMidi(midiNotes);
+                        
+                        statusMessage.innerHTML = `
+                            <strong>Loaded: ${sampleName}</strong> (${midiNotes.length} notes)<br>
+                            <span style="color: ${themeColor}">🎵 Detected: ${analysis.key} ${analysis.mode}</span> 
+                            (${analysis.confidence}% confidence)<br>
+                            <small>Heat map shows note frequency - brighter = played more often</small>
+                        `;
+                        statusMessage.style.color = '#fff';
+                        showAllBtn.disabled = false;
+                        playBtn.disabled = false;
+                        loopBtn.disabled = false;
+                        stepBackBtn.disabled = false;
+                        stepForwardBtn.disabled = false;
+                        speedSlider.disabled = false;
+                        currentStepIndex = 0;
+                        
+                        fretboardLabel.textContent = `${analysis.key} ${analysis.mode} - Guitar Fretboard`;
+                        showHeatMap();
+                    }
+                } catch (error) {
+                    console.error('Error loading sample:', error);
+                    statusMessage.textContent = `Error loading ${sampleName}`;
+                    statusMessage.style.color = '#ff6b6b';
+                }
+            } else {
+                // Generated sample
+                midiNotes = generateSampleMidi(sampleType);
+                statusMessage.textContent = `Loaded sample: ${sampleName}`;
+                statusMessage.style.color = themeColor;
+                showAllBtn.disabled = false;
+                playBtn.disabled = false;
+                loopBtn.disabled = false;
+                stepBackBtn.disabled = false;
+                stepForwardBtn.disabled = false;
+                speedSlider.disabled = false;
+                currentStepIndex = 0;
+            }
         });
         
         showAllBtn.addEventListener('click', showAllNotes);
@@ -1215,6 +1307,23 @@
         
         tuningSelect.addEventListener('change', (e) => {
             currentTuning = tunings[e.target.value];
+            const isUkulele = currentTuning.length === 4;
+            const instrumentName = isUkulele ? 'Ukulele' : 'Guitar';
+            
+            // Update fretboard label
+            if (midiNotes.length > 0) {
+                const currentLabel = fretboardLabel.textContent;
+                if (currentLabel.includes('-')) {
+                    // Has key/mode info, preserve it
+                    const keyMode = currentLabel.split('-')[0].trim();
+                    fretboardLabel.textContent = `${keyMode} - ${instrumentName} Fretboard`;
+                } else {
+                    fretboardLabel.textContent = `${instrumentName} Fretboard`;
+                }
+            } else {
+                fretboardLabel.textContent = `${instrumentName} Fretboard`;
+            }
+            
             drawFretboard();
         });
         
