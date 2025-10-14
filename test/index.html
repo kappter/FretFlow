@@ -253,9 +253,27 @@
                 <option value="">Select Sample MIDI</option>
                 <option value="cmajor">C Major Scale</option>
                 <option value="blues">Blues Riff</option>
-                <option value="arpeggio">Arpeggio Pattern</option>
-                <option value="toccata">Toccata and Fugue in D Minor</option>
-                <option value="bumblebee">Flight of the Bumblebee</option>
+                <option value="arpeggio">Basic Arpeggio</option>
+                <optgroup label="Guitar Practice">
+                    <option value="guitarCMajArp">Guitar: C Major Arpeggio</option>
+                    <option value="guitarGMajArp">Guitar: G Major Arpeggio</option>
+                </optgroup>
+                <optgroup label="Piano Practice">
+                    <option value="pianoCMaj7Arp">Piano: C Major 7 Arpeggio</option>
+                    <option value="pianoAMinArp">Piano: A Minor Arpeggio</option>
+                </optgroup>
+                <optgroup label="Bass Practice">
+                    <option value="bassCMajArp">Bass: C Major Arpeggio</option>
+                    <option value="bassFunkLine">Bass: Funk Line</option>
+                </optgroup>
+                <optgroup label="Ukulele Practice">
+                    <option value="ukuleleCMajArp">Ukulele: C Major Arpeggio</option>
+                    <option value="ukuleleFMajArp">Ukulele: F Major Arpeggio</option>
+                </optgroup>
+                <optgroup label="Classical Pieces">
+                    <option value="toccata">Toccata and Fugue in D Minor</option>
+                    <option value="bumblebee">Flight of the Bumblebee</option>
+                </optgroup>
             </select>
             <select id="notationSelect">
                 <option value="sharp">Sharps</option>
@@ -266,12 +284,14 @@
                 <option value="dropd">Guitar: Drop D Tuning</option>
                 <option value="openg">Guitar: Open G Tuning</option>
                 <option value="dadgad">Guitar: DADGAD Tuning</option>
+                <option value="bass4">Bass: 4-String Standard</option>
+                <option value="bass5">Bass: 5-String Standard</option>
                 <option value="ukulele">Ukulele: Standard (High G)</option>
                 <option value="ukuleleLowG">Ukulele: Low G Tuning</option>
             </select>
             <select id="stringOrderSelect">
+                <option value="lowBottom" selected>Low String Bottom</option>
                 <option value="highBottom">High String Bottom</option>
-                <option value="lowBottom">Low String Bottom</option>
             </select>
             <select id="fretViewSelect">
                 <option value="all">All Frets (0-12)</option>
@@ -328,6 +348,8 @@
             dropd: [38, 45, 50, 55, 59, 64],    // D2 A2 D3 G3 B3 E4 (Guitar)
             openg: [38, 43, 50, 55, 59, 62],    // D2 G2 D3 G3 B3 D4 (Guitar)
             dadgad: [38, 45, 50, 55, 57, 62],   // D2 A2 D3 G3 A3 D4 (Guitar)
+            bass4: [28, 33, 38, 43],            // E1 A1 D2 G2 (4-String Bass)
+            bass5: [23, 28, 33, 38, 43],        // B0 E1 A1 D2 G2 (5-String Bass)
             ukulele: [67, 60, 64, 69],          // G4 C4 E4 A4 (Ukulele High G)
             ukuleleLowG: [55, 60, 64, 69]       // G3 C4 E4 A4 (Ukulele Low G)
         };
@@ -344,7 +366,7 @@
         let currentStepIndex = 0; // For step-through mode
         let currentTuning = tunings.standard;
         let currentNotation = 'sharp';
-        let currentStringOrder = 'highBottom';
+        let currentStringOrder = 'lowBottom';
         let currentFretView = 'all'; // Fret view mode
         let currentDuplicateFilter = 'all'; // Duplicate filter mode
         let themeColor = '#00ffcc';
@@ -386,6 +408,27 @@
             const octave = Math.floor(noteNumber / 12) - 1;
             const note = noteNames[noteNumber % 12];
             return `${note}${octave}`;
+        }
+        
+        function isNoteInRange(noteNumber) {
+            // Check if note can be played on current instrument tuning
+            const numFrets = currentFretView === 'extended' ? 23 : 12;
+            const minNote = Math.min(...currentTuning);
+            const maxNote = Math.max(...currentTuning) + numFrets;
+            return noteNumber >= minNote && noteNumber <= maxNote;
+        }
+        
+        function getNoteRangeWarning(noteNumber) {
+            const numFrets = currentFretView === 'extended' ? 23 : 12;
+            const minNote = Math.min(...currentTuning);
+            const maxNote = Math.max(...currentTuning) + numFrets;
+            
+            if (noteNumber < minNote) {
+                return `⚠️ Note too low for current instrument (min: ${noteToName(minNote, currentNotation)})`;
+            } else if (noteNumber > maxNote) {
+                return `⚠️ Note too high for current instrument (max: ${noteToName(maxNote, currentNotation)})`;
+            }
+            return null;
         }
         
         function hexToRgb(hex) {
@@ -553,6 +596,105 @@
                     { number: 67, time: 1.2 },  // G4
                     { number: 64, time: 1.5 },  // E4
                     { number: 60, time: 1.8 }   // C4
+                ],
+                // Guitar arpeggios
+                guitarCMajArp: [
+                    { number: 48, time: 0 },    // C3
+                    { number: 52, time: 0.3 },  // E3
+                    { number: 55, time: 0.6 },  // G3
+                    { number: 60, time: 0.9 },  // C4
+                    { number: 64, time: 1.2 },  // E4
+                    { number: 67, time: 1.5 },  // G4
+                    { number: 72, time: 1.8 },  // C5
+                    { number: 67, time: 2.1 },  // G4
+                    { number: 64, time: 2.4 },  // E4
+                    { number: 60, time: 2.7 },  // C4
+                    { number: 55, time: 3.0 },  // G3
+                    { number: 52, time: 3.3 }   // E3
+                ],
+                guitarGMajArp: [
+                    { number: 55, time: 0 },    // G3
+                    { number: 59, time: 0.3 },  // B3
+                    { number: 62, time: 0.6 },  // D4
+                    { number: 67, time: 0.9 },  // G4
+                    { number: 71, time: 1.2 },  // B4
+                    { number: 74, time: 1.5 },  // D5
+                    { number: 71, time: 1.8 },  // B4
+                    { number: 67, time: 2.1 },  // G4
+                    { number: 62, time: 2.4 },  // D4
+                    { number: 59, time: 2.7 }   // B3
+                ],
+                // Piano arpeggios
+                pianoCMaj7Arp: [
+                    { number: 48, time: 0 },    // C3
+                    { number: 52, time: 0.25 }, // E3
+                    { number: 55, time: 0.5 },  // G3
+                    { number: 59, time: 0.75 }, // B3
+                    { number: 60, time: 1.0 },  // C4
+                    { number: 64, time: 1.25 }, // E4
+                    { number: 67, time: 1.5 },  // G4
+                    { number: 71, time: 1.75 }, // B4
+                    { number: 72, time: 2.0 },  // C5
+                    { number: 71, time: 2.25 }, // B4
+                    { number: 67, time: 2.5 },  // G4
+                    { number: 64, time: 2.75 }, // E4
+                    { number: 60, time: 3.0 },  // C4
+                    { number: 59, time: 3.25 }, // B3
+                    { number: 55, time: 3.5 },  // G3
+                    { number: 52, time: 3.75 }  // E3
+                ],
+                pianoAMinArp: [
+                    { number: 57, time: 0 },    // A3
+                    { number: 60, time: 0.25 }, // C4
+                    { number: 64, time: 0.5 },  // E4
+                    { number: 69, time: 0.75 }, // A4
+                    { number: 72, time: 1.0 },  // C5
+                    { number: 76, time: 1.25 }, // E5
+                    { number: 72, time: 1.5 },  // C5
+                    { number: 69, time: 1.75 }, // A4
+                    { number: 64, time: 2.0 },  // E4
+                    { number: 60, time: 2.25 }  // C4
+                ],
+                // Bass arpeggios
+                bassCMajArp: [
+                    { number: 36, time: 0 },    // C2
+                    { number: 40, time: 0.4 },  // E2
+                    { number: 43, time: 0.8 },  // G2
+                    { number: 48, time: 1.2 },  // C3
+                    { number: 43, time: 1.6 },  // G2
+                    { number: 40, time: 2.0 },  // E2
+                    { number: 36, time: 2.4 }   // C2
+                ],
+                bassFunkLine: [
+                    { number: 40, time: 0 },    // E2
+                    { number: 40, time: 0.25 }, // E2
+                    { number: 43, time: 0.5 },  // G2
+                    { number: 45, time: 0.75 }, // A2
+                    { number: 47, time: 1.0 },  // B2
+                    { number: 45, time: 1.25 }, // A2
+                    { number: 43, time: 1.5 },  // G2
+                    { number: 40, time: 1.75 }, // E2
+                    { number: 38, time: 2.0 },  // D2
+                    { number: 40, time: 2.5 }   // E2
+                ],
+                // Ukulele arpeggios
+                ukuleleCMajArp: [
+                    { number: 60, time: 0 },    // C4
+                    { number: 64, time: 0.3 },  // E4
+                    { number: 67, time: 0.6 },  // G4
+                    { number: 72, time: 0.9 },  // C5
+                    { number: 76, time: 1.2 },  // E5
+                    { number: 72, time: 1.5 },  // C5
+                    { number: 67, time: 1.8 },  // G4
+                    { number: 64, time: 2.1 }   // E4
+                ],
+                ukuleleFMajArp: [
+                    { number: 65, time: 0 },    // F4
+                    { number: 69, time: 0.3 },  // A4
+                    { number: 72, time: 0.6 },  // C5
+                    { number: 77, time: 0.9 },  // F5
+                    { number: 72, time: 1.2 },  // C5
+                    { number: 69, time: 1.5 }   // A4
                 ]
             };
             
@@ -567,16 +709,17 @@
             const ctx = fretboardCanvas.getContext('2d');
             ctx.clearRect(0, 0, fretboardCanvas.width, fretboardCanvas.height);
             
-            // Detect if current tuning is ukulele (4 strings) or guitar (6 strings)
-            const isUkulele = currentTuning.length === 4;
-            const numStrings = isUkulele ? 4 : 6;
+            // Detect instrument type based on number of strings
+            const numStrings = currentTuning.length;
+            const isUkulele = (numStrings === 4 && currentTuning[0] > 50); // High tuning = ukulele
+            const isBass = (numStrings === 4 || numStrings === 5) && currentTuning[0] < 35; // Low tuning = bass
             
             // Determine number of frets based on view mode
             const numFrets = currentFretView === 'extended' ? 23 : 12;
-            const stringSpacing = isUkulele ? 40 : 35; // Slightly wider spacing for ukulele
+            const stringSpacing = isUkulele ? 40 : (isBass && numStrings === 5 ? 30 : 35); // Adjust spacing based on instrument
             const fretSpacing = currentFretView === 'extended' ? 35 : 55; // Narrower spacing for extended view
             const startX = 80;
-            const startY = isUkulele ? 80 : 60; // Center ukulele vertically
+            const startY = isUkulele ? 50 : (isBass && numStrings === 5 ? 50 : 60); // Adjust vertical position
             
             // Adjust canvas width for extended view
             if (currentFretView === 'extended') {
@@ -585,9 +728,13 @@
                 fretboardCanvas.width = 800;
             }
             
-            // Adjust canvas height for ukulele
+            // Adjust canvas height based on instrument
             if (isUkulele) {
-                fretboardCanvas.height = 300;
+                fretboardCanvas.height = 250;
+            } else if (isBass && numStrings === 5) {
+                fretboardCanvas.height = 280;
+            } else if (isBass) {
+                fretboardCanvas.height = 250;
             } else {
                 fretboardCanvas.height = 350;
             }
@@ -893,7 +1040,9 @@
                         playNote(note.number, 0.3);
                         newNotes.add(note.number);
                         
-                        const info = `<span style="color: ${themeColor}">♪</span> Note: ${note.name} (${note.number}) at ${playbackTime.toFixed(2)}s<br>`;
+                        const rangeWarning = getNoteRangeWarning(note.number);
+                        const warningText = rangeWarning ? ` <span style="color: #ff6b6b">${rangeWarning}</span>` : '';
+                        const info = `<span style="color: ${themeColor}">♪</span> Note: ${note.name} (${note.number}) at ${playbackTime.toFixed(2)}s${warningText}<br>`;
                         midiInfo.innerHTML += info;
                         midiInfo.scrollTop = midiInfo.scrollHeight;
                     }
@@ -935,6 +1084,15 @@
             isPlaying = false;
             playBtn.disabled = false;
             pauseBtn.disabled = true;
+            
+            // Set currentStepIndex to the note at or just before current playback time
+            // This allows users to step from the paused position
+            for (let i = midiNotes.length - 1; i >= 0; i--) {
+                if (midiNotes[i].time <= playbackTime) {
+                    currentStepIndex = i;
+                    break;
+                }
+            }
         }
         
         function stopPlayback() {
@@ -1001,12 +1159,16 @@
             // Play audio for this note
             playNote(note.number, 0.5);
             
+            // Check if note is in range
+            const rangeWarning = getNoteRangeWarning(note.number);
+            
             // Update info display
             midiInfo.innerHTML = `
                 <span style="color: ${themeColor}">🎵 Step Mode</span><br>
                 <strong>Note ${currentStepIndex + 1} of ${midiNotes.length}</strong><br>
                 Note: ${note.name} (MIDI ${note.number})<br>
                 Time: ${note.time.toFixed(2)}s<br>
+                ${rangeWarning ? `<span style="color: #ff6b6b">${rangeWarning}</span><br>` : ''}
                 <small>Use Step Forward/Back to analyze each position</small>
             `;
             
@@ -1114,29 +1276,41 @@
             statusMessage.style.color = themeColor;
         }
         
-        function showAllNotes() {
+         function showAllNotes() {
             if (midiNotes.length === 0) return;
             
             console.log('🎵 Showing all', midiNotes.length, 'notes on fretboard');
             
             // Stop any playback
             if (isPlaying) {
-                stopPlayback();
+                pausePlayback();
             }
             
-            // Add all unique notes to activeNotes (no heat map)
             activeNotes.clear();
             noteIntensity = {}; // Clear heat map
-            const uniqueNotes = new Set(midiNotes.map(n => n.number));
-            uniqueNotes.forEach(n => activeNotes.add(n));
+            const uniqueNotes = new Set();
+            const outOfRangeNotes = new Set();
+            midiNotes.forEach(note => {
+                activeNotes.add(note.number);
+                uniqueNotes.add(note.number);
+                if (!isNoteInRange(note.number)) {
+                    outOfRangeNotes.add(note.number);
+                }
+            });
             
             console.log('   Unique notes:', uniqueNotes.size);
             console.log('   Note range:', Math.min(...uniqueNotes), '-', Math.max(...uniqueNotes));
+            console.log('   Out of range notes:', outOfRangeNotes.size);
             
             // Update info display
             midiInfo.innerHTML = `<span style="color: ${themeColor}">Displaying all ${uniqueNotes.size} unique notes from MIDI file</span><br>`;
             const noteList = Array.from(uniqueNotes).sort((a, b) => a - b).map(n => noteToName(n, currentNotation)).join(', ');
-            midiInfo.innerHTML += `Notes: ${noteList}`;
+            midiInfo.innerHTML += `Notes: ${noteList}<br>`;
+            
+            if (outOfRangeNotes.size > 0) {
+                const outOfRangeList = Array.from(outOfRangeNotes).sort((a, b) => a - b).map(n => noteToName(n, currentNotation)).join(', ');
+                midiInfo.innerHTML += `<span style="color: #ff6b6b">⚠️ ${outOfRangeNotes.size} notes out of range for current instrument: ${outOfRangeList}</span>`;
+            }
             
             // Draw visualizations
             drawFretboard();
@@ -1307,8 +1481,10 @@
         
         tuningSelect.addEventListener('change', (e) => {
             currentTuning = tunings[e.target.value];
-            const isUkulele = currentTuning.length === 4;
-            const instrumentName = isUkulele ? 'Ukulele' : 'Guitar';
+            const numStrings = currentTuning.length;
+            const isUkulele = (numStrings === 4 && currentTuning[0] > 50);
+            const isBass = (numStrings === 4 || numStrings === 5) && currentTuning[0] < 35;
+            const instrumentName = isUkulele ? 'Ukulele' : (isBass ? 'Bass' : 'Guitar');
             
             // Update fretboard label
             if (midiNotes.length > 0) {
